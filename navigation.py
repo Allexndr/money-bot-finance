@@ -89,4 +89,5 @@ class Pages:
     QUEST_COMMUNITY = "quest_community"
     TG_CHANNEL = "tg_channel"
     CLOSED_CLUB = "closed_club"
+    DEMO_ACCESS = "demo_access"
 

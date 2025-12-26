@@ -179,6 +179,9 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
     elif data == "subscribe":
         add_to_history(user_id, Pages.SUBSCRIBE)
         await handle_subscription_callback(query, context)
+    elif data == "demo_access":
+        add_to_history(user_id, Pages.DEMO_ACCESS)
+        await handle_demo_access_callback(query, context)
     elif data == "consultation":
         add_to_history(user_id, Pages.CONSULTATION)
         await handle_consultation_callback(query, context)
@@ -1589,6 +1592,21 @@ async def admin_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         admin_text,
         reply_markup=get_admin_panel_keyboard(user_id),
+        parse_mode=ParseMode.HTML
+    )
+
+async def handle_demo_access_callback(query, context):
+    """Обработчик демо-доступа через callback"""
+    buttons = [
+        [InlineKeyboardButton("🎁 Получить доступ в клуб «Квантовый скачок»", url="https://t.me/+FhtqAiCaCdIzOGUy")]
+    ]
+    reply_markup = create_navigation_keyboard(query.from_user.id, buttons, "nav")
+
+    await query.edit_message_text(
+        "🎁 <b>Доступ в клуб «Квантовый скачок» на 3 дня в подарок</b>\n\n"
+        "В этой группе мы учимся менять сознание таким образом, чтобы изменить реальность и прийти к изобилию во всех сферах жизни.\n\n"
+        "Нажмите кнопку ниже для получения доступа:",
+        reply_markup=reply_markup,
         parse_mode=ParseMode.HTML
     )
 
