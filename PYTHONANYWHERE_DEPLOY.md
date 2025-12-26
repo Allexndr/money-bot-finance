@@ -77,6 +77,27 @@ cd your-project
    */30 * * * * /home/your-username/your-project/deploy.sh
    ```
 
+### **Способ 4: PythonAnywhere API (продвинутый)**
+
+Используйте `pythonanywhere_api_deploy.py` для полного контроля через REST API:
+
+```bash
+# Запустите интерактивный скрипт
+python pythonanywhere_api_deploy.py
+```
+
+**Возможности API:**
+- 🚀 Ручной деплой через API
+- 📅 Создание/управление cron jobs
+- 🔄 Управление always-on задачами
+- 📺 Выполнение команд в консоли
+- 🌐 Перезагрузка веб-приложений
+
+**Настройка:**
+1. Получите API токен: Account → API Token
+2. Измените настройки в `pythonanywhere_api_deploy.py`
+3. Запустите скрипт
+
 ## 🔧 Ручной деплой
 
 Если нужно обновить бота вручную:
