@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/prisma';
+import { getPrismaClient } from '@/lib/prisma';
 import { TelegramInlineKeyboardButton, TelegramInlineKeyboardMarkup } from '@/types/telegram';
 
 export interface BotMessage {
@@ -27,12 +27,14 @@ export interface BotButton {
 
 export class BotManager {
   static async getMessageByKey(pageKey: string): Promise<BotMessage | null> {
+    const prisma = getPrismaClient();
     return prisma.botMessage.findUnique({
       where: { page_key: pageKey },
     });
   }
 
   static async getButtonsForMessage(messageId: number): Promise<BotButton[]> {
+    const prisma = getPrismaClient();
     return prisma.botButton.findMany({
       where: {
         message_id: messageId,
@@ -121,6 +123,7 @@ export class BotManager {
     parse_mode?: string;
     is_main_menu?: boolean;
   }): Promise<BotMessage> {
+    const prisma = getPrismaClient();
     return prisma.botMessage.create({
       data: {
         page_key: data.page_key,
@@ -142,6 +145,7 @@ export class BotManager {
       is_main_menu: boolean;
     }>
   ): Promise<BotMessage> {
+    const prisma = getPrismaClient();
     return prisma.botMessage.update({
       where: { id },
       data,
@@ -149,6 +153,7 @@ export class BotManager {
   }
 
   static async deleteMessage(id: number): Promise<BotMessage> {
+    const prisma = getPrismaClient();
     return prisma.botMessage.delete({
       where: { id },
     });
@@ -162,6 +167,7 @@ export class BotManager {
     row?: number;
     order?: number;
   }): Promise<BotButton> {
+    const prisma = getPrismaClient();
     return prisma.botButton.create({
       data: {
         message_id: data.message_id,
@@ -185,6 +191,7 @@ export class BotManager {
       is_active: boolean;
     }>
   ): Promise<BotButton> {
+    const prisma = getPrismaClient();
     return prisma.botButton.update({
       where: { id },
       data,
@@ -192,18 +199,21 @@ export class BotManager {
   }
 
   static async deleteButton(id: number): Promise<BotButton> {
+    const prisma = getPrismaClient();
     return prisma.botButton.delete({
       where: { id },
     });
   }
 
   static async getAllMessages(): Promise<BotMessage[]> {
+    const prisma = getPrismaClient();
     return prisma.botMessage.findMany({
       orderBy: { created_at: 'desc' },
     });
   }
 
   static async getAllButtons(): Promise<BotButton[]> {
+    const prisma = getPrismaClient();
     return prisma.botButton.findMany({
       include: { message: true },
       orderBy: { created_at: 'desc' },

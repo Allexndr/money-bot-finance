@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { TelegramUpdate, TelegramCallbackQuery, TelegramMessage } from '@/types/telegram';
-import { prisma } from '@/lib/prisma';
+import { getPrismaClient } from '@/lib/prisma';
 import { TelegramBot } from '@/lib/telegram';
 import { BotManager } from '@/utils/bot-manager';
 
@@ -28,6 +28,7 @@ function getPreviousPage(userId: number): string | null {
 }
 
 async function handleStartCommand(chatId: number, user: any) {
+  const prisma = getPrismaClient();
   // Создаем или обновляем пользователя
   await prisma.user.upsert({
     where: { telegram_id: user.id },

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { TelegramBot } from '@/lib/telegram';
+import { getPrismaClient } from '@/lib/prisma';
 
 export async function POST() {
   try {

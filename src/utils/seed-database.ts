@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/prisma';
+import { getPrismaClient } from '@/lib/prisma';
 import { BotManager } from './bot-manager';
 
 const DEFAULT_MESSAGES = {
@@ -31,6 +31,8 @@ const DEFAULT_MESSAGES = {
 
 export async function seedDatabase() {
   console.log('🌱 Seeding database...');
+
+  const prisma = getPrismaClient();
 
   // Создаем дефолтные сообщения
   for (const [pageKey, messageData] of Object.entries(DEFAULT_MESSAGES)) {

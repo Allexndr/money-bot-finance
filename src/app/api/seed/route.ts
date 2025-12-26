@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { seedDatabase } from '@/utils/seed-database';
+import { getPrismaClient } from '@/lib/prisma';
 
 export async function POST() {
   try {
