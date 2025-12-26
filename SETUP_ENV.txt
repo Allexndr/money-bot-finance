@@ -1,0 +1,16 @@
+Создайте файл .env.local со следующим содержимым:
+
+# Database
+DATABASE_URL="file:./dev.db"
+
+# Telegram Bot Token
+BOT_TOKEN="8300376368:AAGGP6Ln1f0QNoNHQr0xOxpmXzJBIHSpkhg"
+
+# Bot Configuration
+BOT_USERNAME="bolshe_deneg_bot"
+WEBHOOK_SECRET="money_bot_webhook_secret_2024"
+
+# Next.js
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
+
+Для продакшена на Vercel замените NEXT_PUBLIC_APP_URL на URL вашего Vercel приложения.

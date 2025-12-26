@@ -1,36 +1,147 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🤖 Money Bot (Next.js)
 
-## Getting Started
+Telegram бот для управления финансами, развернутый на Next.js и Vercel с использованием вебхуков.
 
-First, run the development server:
+## 🚀 Быстрое начало
+
+### 1. Клонирование и установка
+
+```bash
+git clone <repository-url>
+cd nextjs-bot
+npm install
+```
+
+### 2. Настройка переменных окружения
+
+Создайте файл `.env.local` в корне проекта:
+
+```env
+# Telegram Bot Token (получить у @BotFather)
+BOT_TOKEN=your_bot_token_here
+
+# Database
+DATABASE_URL="file:./dev.db"
+
+# Bot Configuration
+BOT_USERNAME=your_bot_username
+WEBHOOK_SECRET=your_webhook_secret_here
+
+# Next.js (URL вашего Vercel приложения)
+NEXT_PUBLIC_APP_URL=https://your-app-name.vercel.app
+```
+
+### 3. Настройка базы данных
+
+```bash
+# Генерация Prisma клиента
+npm run db:generate
+
+# Создание миграции
+npm run db:migrate
+
+# Заполнение базы данных начальными данными
+npm run db:seed
+```
+
+### 4. Локальная разработка
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Откройте [http://localhost:3000](http://localhost:3000) для доступа к панели управления ботом.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 📦 Развертывание на Vercel
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Шаг 1: Подготовка к развертыванию
 
-## Learn More
+1. **Создайте репозиторий на GitHub** и загрузите код
+2. **Подключите Vercel** к вашему GitHub репозиторию
+3. **Настройте переменные окружения** в Vercel:
 
-To learn more about Next.js, take a look at the following resources:
+   Перейдите в Settings → Environment Variables и добавьте:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+   ```
+   BOT_TOKEN=ваш_токен_бота
+   DATABASE_URL=file:./dev.db
+   BOT_USERNAME=имя_вашего_бота
+   WEBHOOK_SECRET=секрет_для_вебхука
+   NEXT_PUBLIC_APP_URL=https://your-app-name.vercel.app
+   ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Шаг 2: Развертывание
 
-## Deploy on Vercel
+1. **Нажмите "Deploy"** в Vercel
+2. **Дождитесь завершения развертывания**
+3. **Скопируйте URL** вашего приложения (например: `https://your-app-name.vercel.app`)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Шаг 3: Настройка вебхука
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. **Перейдите на URL вашего приложения**
+2. **Нажмите "🔧 Настроить вебхук"** - это автоматически настроит вебхук для Telegram бота
+
+## 🗄️ Структура базы данных
+
+Бот использует SQLite базу данных с следующими таблицами:
+
+- **users** - пользователи бота
+- **bot_messages** - сообщения и страницы бота
+- **bot_buttons** - кнопки для сообщений
+- **course_applications** - заявки на курсы
+- **newsletters** - рассылки
+
+## 🔧 API маршруты
+
+- `GET/POST /api/webhook` - обработка вебхуков от Telegram
+- `POST /api/setup-webhook` - настройка вебхука
+- `DELETE /api/setup-webhook` - удаление вебхука
+- `POST /api/seed` - заполнение базы данных начальными данными
+
+## 📱 Функционал бота
+
+- ✅ Главное меню с кнопками
+- ✅ Навигация между страницами
+- ✅ Поддержка URL ссылок
+- ✅ Админ панель (в разработке)
+- ✅ Управление сообщениями и кнопками
+- ✅ Работа с вебхуками (бесплатный хостинг)
+
+## 🛠️ Разработка
+
+### Добавление новых функций
+
+1. **Сообщения**: Добавьте записи в `src/utils/seed-database.ts`
+2. **Обработчики**: Расширьте логику в `src/app/api/webhook/route.ts`
+3. **База данных**: Обновите схему в `prisma/schema.prisma`
+
+### Локальное тестирование
+
+```bash
+# Запуск в режиме разработки
+npm run dev
+
+# Проверка линтера
+npm run lint
+
+# Сборка для продакшена
+npm run build
+```
+
+## 🔒 Безопасность
+
+- Вебхуки защищены секретным токеном
+- Переменные окружения не коммитятся в Git
+- Доступ к базе данных ограничен
+
+## 📞 Поддержка
+
+Если возникли проблемы:
+1. Проверьте логи Vercel
+2. Убедитесь, что BOT_TOKEN корректный
+3. Проверьте настройку переменных окружения
+4. Убедитесь, что вебхук настроен правильно
+
+## 📝 Лицензия
+
+Этот проект предназначен для личного использования.

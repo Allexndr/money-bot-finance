@@ -1,0 +1,12 @@
+# Database
+DATABASE_URL="file:./dev.db"
+
+# Telegram Bot Token
+BOT_TOKEN="your_bot_token_here"
+
+# Bot Configuration
+BOT_USERNAME="your_bot_username"
+WEBHOOK_SECRET="your_webhook_secret_here"
+
+# Next.js
+NEXT_PUBLIC_APP_URL="https://your-app-name.vercel.app"

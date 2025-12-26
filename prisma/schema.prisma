@@ -1,0 +1,77 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  telegram_id  Int      @unique
+  username     String?
+  first_name   String?
+  last_name    String?
+  created_at   DateTime @default(now())
+  is_subscribed Boolean  @default(true)
+
+  @@map("users")
+}
+
+model CourseApplication {
+  id               Int      @id @default(autoincrement())
+  user_id          Int
+  user_telegram_id Int
+  username         String?
+  first_name       String?
+  status           String   @default("pending")
+  created_at       DateTime @default(now())
+  processed_at     DateTime?
+  processed_by     String?
+
+  @@map("course_applications")
+}
+
+model Newsletter {
+  id        Int      @id @default(autoincrement())
+  title     String
+  content   String
+  created_at DateTime @default(now())
+  sent_at   DateTime?
+  is_sent   Boolean  @default(false)
+
+  @@map("newsletters")
+}
+
+model BotMessage {
+  id          Int       @id @default(autoincrement())
+  page_key    String    @unique
+  title       String?
+  text        String
+  parse_mode  String    @default("HTML")
+  is_main_menu Boolean   @default(false)
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+  buttons     BotButton[]
+
+  @@map("bot_messages")
+}
+
+model BotButton {
+  id          Int       @id @default(autoincrement())
+  message_id  Int
+  text        String
+  button_type String
+  action_data String
+  row         Int       @default(0)
+  order       Int       @default(0)
+  is_active   Boolean   @default(true)
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+  message     BotMessage @relation(fields: [message_id], references: [id])
+
+  @@map("bot_buttons")
+}
