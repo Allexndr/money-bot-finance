@@ -1,8 +1,1 @@
-{
-  "functions": {
-    "src/app/api/**/*.ts": {
-      "runtime": "@vercel/node",
-      "maxDuration": 10
-    }
-  }
-}
+{}
