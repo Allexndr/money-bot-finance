@@ -79,14 +79,12 @@ class SimpleDeploy:
                     print(f"🗑️ Удаляем старую задачу: {task['id']}")
                     self.api_request('DELETE', f'/schedule/{task["id"]}/')
 
-        # Создаем новую задачу (каждые 2 часа)
+        # Создаем новую задачу (каждый час в :30)
         task = self.api_request('POST', '/schedule/', {
             "command": cron_command,
             "description": f"Auto-deploy {PROJECT_NAME}",
             "enabled": True,
-            "interval": "daily",
-            "hour": 2,
-            "minute": 0
+            "interval": "hourly"
         })
 
         if task:
