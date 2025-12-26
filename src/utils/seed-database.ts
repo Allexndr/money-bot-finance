@@ -32,7 +32,13 @@ const DEFAULT_MESSAGES = {
 export async function seedDatabase() {
   console.log('🌱 Seeding database...');
 
+  const { getPrismaClient } = await import('@/lib/prisma');
   const prisma = getPrismaClient();
+
+  if (!prisma) {
+    console.warn('Prisma not available during build, skipping seed');
+    return;
+  }
 
   // Создаем дефолтные сообщения
   for (const [pageKey, messageData] of Object.entries(DEFAULT_MESSAGES)) {

@@ -33,21 +33,23 @@ async function handleStartCommand(chatId: number, user: any) {
   const { BotManager } = await import('@/utils/bot-manager');
 
   const prisma = getPrismaClient();
-  // Создаем или обновляем пользователя
-  await prisma.user.upsert({
-    where: { telegram_id: user.id },
-    update: {
-      username: user.username,
-      first_name: user.first_name,
-      last_name: user.last_name,
-    },
-    create: {
-      telegram_id: user.id,
-      username: user.username,
-      first_name: user.first_name,
-      last_name: user.last_name,
-    },
-  });
+  if (prisma) {
+    // Создаем или обновляем пользователя
+    await prisma.user.upsert({
+      where: { telegram_id: user.id },
+      update: {
+        username: user.username,
+        first_name: user.first_name,
+        last_name: user.last_name,
+      },
+      create: {
+        telegram_id: user.id,
+        username: user.username,
+        first_name: user.first_name,
+        last_name: user.last_name,
+      },
+    });
+  }
 
   // Получаем главное меню
   const mainMenu = await BotManager.getMessageByKey('main_menu');
