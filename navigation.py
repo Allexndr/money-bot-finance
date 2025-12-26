@@ -82,7 +82,6 @@ class Pages:
     BUY_QUEST = "buy_quest"
     SUBSCRIBE = "subscribe"
     FREE_QUEST = "free_quest"
-    DEMO_ACCESS = "demo_access"
     CONSULTATION = "consultation"
     COURSE_BUY = "course_buy"
     OFFER = "offer"

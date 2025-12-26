@@ -179,9 +179,6 @@ async def handle_callback_query(update: Update, context: ContextTypes.DEFAULT_TY
     elif data == "subscribe":
         add_to_history(user_id, Pages.SUBSCRIBE)
         await handle_subscription_callback(query, context)
-    elif data == "demo_access":
-        add_to_history(user_id, Pages.DEMO_ACCESS)
-        await handle_demo_access_callback(query, context)
     elif data == "consultation":
         add_to_history(user_id, Pages.CONSULTATION)
         await handle_consultation_callback(query, context)
@@ -594,29 +591,6 @@ async def handle_quest_community_callback(query, context):
         reply_markup=reply_markup,
         parse_mode=ParseMode.HTML
     )
-
-async def handle_demo_access_callback(query, context):
-    """Обработчик демо-доступа через callback"""
-    if PRIVATE_CHANNEL_ID:
-        buttons = [
-            [InlineKeyboardButton("🔗 Получить демо-доступ", url=f"https://t.me/{PRIVATE_CHANNEL_ID}")]
-        ]
-        reply_markup = create_navigation_keyboard(query.from_user.id, buttons, "nav")
-        
-        await query.edit_message_text(
-            "🎁 <b>3-х дневный демо-доступ</b>\n\n"
-            "Вот ваша ссылка для получения демо-доступа к курсу:",
-            reply_markup=reply_markup,
-            parse_mode=ParseMode.HTML
-        )
-    else:
-        await query.edit_message_text(
-            "🎁 <b>Демо-доступ</b>\n\n"
-            "Демо-доступ временно недоступен. "
-            "Обратитесь к администратору для получения доступа.",
-            reply_markup=get_back_keyboard(query.from_user.id),
-            parse_mode=ParseMode.HTML
-        )
 
 async def handle_consultation_callback(query, context):
     """Обработчик записи на консультацию через callback"""
