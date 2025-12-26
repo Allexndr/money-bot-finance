@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { seedDatabase } from '@/utils/seed-database';
 import { getPrismaClient } from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST() {
   try {
     await seedDatabase();

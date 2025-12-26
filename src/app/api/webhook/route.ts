@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { TelegramUpdate, TelegramCallbackQuery, TelegramMessage } from '@/types/telegram';
-import { getPrismaClient } from '@/lib/prisma';
 import { TelegramBot } from '@/lib/telegram';
-import { BotManager } from '@/utils/bot-manager';
 
 const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET;
+
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 // Навигационная история пользователей
 const USER_NAVIGATION_HISTORY: { [key: number]: string[] } = {};
@@ -28,6 +29,9 @@ function getPreviousPage(userId: number): string | null {
 }
 
 async function handleStartCommand(chatId: number, user: any) {
+  const { getPrismaClient } = await import('@/lib/prisma');
+  const { BotManager } = await import('@/utils/bot-manager');
+
   const prisma = getPrismaClient();
   // Создаем или обновляем пользователя
   await prisma.user.upsert({
@@ -72,6 +76,7 @@ async function handleCallbackQuery(callbackQuery: TelegramCallbackQuery) {
   await TelegramBot.answerCallbackQuery(queryId);
 
   // Проверяем, есть ли сообщение в базе данных с таким page_key
+  const { BotManager } = await import('@/utils/bot-manager');
   const dbMessage = await BotManager.getMessageByKey(data!);
 
   if (dbMessage) {
@@ -99,6 +104,7 @@ async function showMessageFromDb(callbackQuery: TelegramCallbackQuery, message: 
 
   if (!chatId || !messageId) return;
 
+  const { BotManager } = await import('@/utils/bot-manager');
   const keyboard = await BotManager.buildKeyboardFromDb(message.id, userId);
   const text = message.title ? `${message.title}\n\n${message.text}` : message.text;
 

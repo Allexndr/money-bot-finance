@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { TelegramBot } from '@/lib/telegram';
-import { getPrismaClient } from '@/lib/prisma';
+
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 export async function POST() {
   try {
