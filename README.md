@@ -70,6 +70,8 @@ npm run dev
    NEXT_PUBLIC_APP_URL=https://your-app-name.vercel.app
    ```
 
+   **⚠️ Важно!** Добавьте все переменные окружения **перед** первым деплоем, иначе билд упадет с ошибкой Prisma!
+
 ### Шаг 2: Развертывание
 
 1. **Нажмите "Deploy"** в Vercel
