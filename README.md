@@ -1,36 +1,66 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🎣 GitHub Webhook Service
 
-## Getting Started
+Простой сервис для получения webhook уведомлений от GitHub и отправки уведомлений в Telegram бот.
 
-First, run the development server:
+## 🚀 Быстрое развертывание
 
+### 1. Клонировать и установить
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/Allexndr/money_bot.git -b webhook-service
+cd webhook-service
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Настроить переменные окружения
+В Vercel добавьте переменные:
+```
+BOT_TOKEN=8300376368:AAGGP6Ln1f0QNoNHQr0xOxpmXzJBIHSpkhg
+ADMIN_CHAT_ID=5450018125
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 3. Развернуть на Vercel
+```bash
+vercel --prod
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🎯 Как работает
 
-## Learn More
+1. **GitHub** отправляет webhook при пуше в репозиторий
+2. **Этот сервис** получает уведомление на `/api/webhook`
+3. **Telegram бот** получает сообщение с информацией о коммитах
+4. **Администратор** видит уведомление в Telegram
 
-To learn more about Next.js, take a look at the following resources:
+## 📡 Webhook URL
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+После развертывания на Vercel, URL будет выглядеть так:
+```
+https://your-app-name.vercel.app/api/webhook
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🔧 Настройка GitHub
 
-## Deploy on Vercel
+1. Перейти в репозиторий → **Settings** → **Webhooks**
+2. **Add webhook**:
+   - **Payload URL**: `https://your-app-name.vercel.app/api/webhook`
+   - **Content type**: `application/json`
+   - **Events**: `Pushes`
+   - **Branch**: `python-version` (или нужная ветка)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 📱 Что получает бот
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+При каждом пуше бот получает сообщение:
+```
+🚀 GitHub Update
+
+📦 Repository: money_bot
+🌿 Branch: python-version
+📝 Commits: 2
+
+📋 Changes:
+1. a1b2c3d - Added new feature
+2. e4f5g6h - Fixed bug
+```
+
+## ✅ Проверка работы
+
+Посетите главную страницу сервиса для проверки статуса.
