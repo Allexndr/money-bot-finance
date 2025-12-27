@@ -456,39 +456,38 @@ async def admin_create_button_callback(query, context):
     """Начать создание новой кнопки"""
     db = SessionLocal()
     try:
-        messages = get_all_messages(db)
-        
-        if not messages:
-            await query.edit_message_text(
-                "➕ <b>СОЗДАНИЕ КНОПКИ</b>\n\n"
-                "Сначала создайте сообщение!",
-                reply_markup=get_back_to_button_management_keyboard(query.from_user.id),
-                parse_mode=ParseMode.HTML
-            )
+        # Получаем ID сообщения из callback_data (admin_create_button_msg_{id})
+        try:
+            message_id = int(query.data.split('_')[-1])
+        except (ValueError, IndexError):
+            await query.answer("❌ Ошибка получения ID сообщения")
             return
-        
+
+        # Проверяем существование сообщения
+        target_msg = db.query(BotMessage).filter(BotMessage.id == message_id).first()
+        if not target_msg:
+             await query.edit_message_text("❌ Сообщение не найдено.")
+             return
+
         user_id = query.from_user.id
         ADMIN_BUTTON_STATES[user_id] = {
             'action': 'create_button',
-            'step': 'select_message'
+            'step': 'initial_type_selection',
+            'message_id': message_id
         }
         
-        text = "➕ <b>СОЗДАНИЕ НОВОЙ КНОПКИ</b>\n\n"
-        text += "Выберите сообщение, к которому добавить кнопку:\n\n"
-        text += "<i>Сначала определите экран, затем настроите текст и действие будущей кнопки.</i>\n\n"
+        text = "➕ <b>ДОБАВЛЕНИЕ КНОПКИ</b>\n\n"
+        text += "Что эта кнопка должна делать?\n\n"
         
-        buttons = []
-        for msg in messages:
-            buttons.append([
-                InlineKeyboardButton(
-                    f"📝 {msg.page_key}",
-                    callback_data=f"admin_create_button_msg_{msg.id}"
-                )
-            ])
-        
-        buttons.append([
-            InlineKeyboardButton("🔙 Назад", callback_data="admin_button_management")
-        ])
+        buttons = [
+            [
+                InlineKeyboardButton("🔗 Открыть ссылку", callback_data=f"admin_btn_creation_type_url_{message_id}"),
+                InlineKeyboardButton("📄 Открыть страницу", callback_data=f"admin_btn_creation_type_message_{message_id}")
+            ],
+            [
+                InlineKeyboardButton("🔙 Отмена", callback_data=f"admin_edit_message_{message_id}")
+            ]
+        ]
         
         await query.edit_message_text(
             text,

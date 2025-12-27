@@ -32,7 +32,8 @@ from admin_button_manager import (
 )
 from button_manager import (
     get_message_by_key, build_keyboard_from_db, create_message, update_message,
-    create_button, update_button, delete_button, get_all_messages, ensure_default_messages
+    create_button, update_button, delete_button, get_all_messages, ensure_default_messages,
+    get_buttons_for_message
 )
 
 # Настройка логирования
@@ -1071,6 +1072,72 @@ async def handle_admin_callback(query, context, data):
                     )
                 finally:
                     db.close()
+    elif data.startswith("admin_create_btn_select_page_"):
+        parts = data.split("_")
+        page_key = parts[-1]
+        message_id = int(parts[-2])
+        
+        user_id = query.from_user.id
+        if user_id in ADMIN_BUTTON_STATES:
+            state = ADMIN_BUTTON_STATES[user_id]
+            if state.get('action') == 'create_button' and state.get('message_id') == message_id:
+                state['action_data'] = page_key
+                state['step'] = 'text_input'
+                
+                await query.edit_message_text(
+                    f"✅ Страница '{page_key}' выбрана!\n\n"
+                    "Теперь введите <b>текст на кнопке</b>:",
+                    reply_markup=get_back_to_button_management_keyboard(user_id),
+                    parse_mode=ParseMode.HTML
+                )
+
+    elif data.startswith("admin_btn_creation_type_"):
+        parts = data.split("_")
+        target_type = parts[-2] # url or message
+        message_id = int(parts[-1])
+        
+        user_id = query.from_user.id
+        if user_id in ADMIN_BUTTON_STATES:
+            state = ADMIN_BUTTON_STATES[user_id]
+            state['button_type'] = target_type
+            
+            if target_type == 'url':
+                state['step'] = 'url_input'
+                await query.edit_message_text(
+                    "🔗 <b>ВСТАВЬТЕ ССЫЛКУ</b>\n\n"
+                    "Отправьте боту полную ссылку (начиная с http:// или https://).\n"
+                    "Например: https://t.me/avto_voronka_bot",
+                    reply_markup=get_back_to_button_management_keyboard(user_id),
+                    parse_mode=ParseMode.HTML
+                )
+            elif target_type == 'message':
+                state['step'] = 'text_input' # Skip page selection? NO, need to select page.
+                state['step'] = 'page_select'
+                
+                # Show list of pages
+                db = SessionLocal()
+                try:
+                    messages = get_all_messages(db)
+                    page_buttons = []
+                    for msg in messages:
+                        # Don't link to self if possible? (not critical)
+                        page_buttons.append([
+                            InlineKeyboardButton(
+                                f"📄 {msg.title or msg.page_key}", 
+                                callback_data=f"admin_create_btn_select_page_{message_id}_{msg.page_key}"
+                            )
+                        ])
+                    page_buttons.append([InlineKeyboardButton("🔙 Отмена", callback_data=f"admin_create_button_msg_{message_id}")])
+                    
+                    await query.edit_message_text(
+                        "📄 <b>ВЫБЕРИТЕ СТРАНИЦУ</b>\n\n"
+                        "Какую страницу открыть при нажатии на кнопку?",
+                        reply_markup=InlineKeyboardMarkup(page_buttons),
+                        parse_mode=ParseMode.HTML
+                    )
+                finally:
+                    db.close()
+
     elif data.startswith("admin_btn_type_"):
         parts = data.split("_")
         button_type = parts[-2]  # callback, url, message
@@ -1328,100 +1395,50 @@ async def handle_newsletter_input(update: Update, context: ContextTypes.DEFAULT_
                 step = state.get('step')
                 message_id = state.get('message_id')
                 
-                if step == 'text':
-                    state['text'] = update.message.text
-                    state['step'] = 'type'
+                if step == 'url_input':
+                    url = update.message.text.strip()
+                    # Validate URL
+                    if not url.startswith(('http://', 'https://')):
+                         await update.message.reply_text(
+                            "❌ Ссылка должна начинаться с http:// или https://\n\n"
+                            "Попробуйте еще раз:",
+                            reply_markup=get_back_to_button_management_keyboard(user_id)
+                        )
+                         return
                     
-                    buttons = [
-                        [
-                            InlineKeyboardButton("🔄 Callback", callback_data=f"admin_btn_type_callback_{message_id}"),
-                            InlineKeyboardButton("🔗 URL", callback_data=f"admin_btn_type_url_{message_id}")
-                        ],
-                        [
-                            InlineKeyboardButton("➡️ Message", callback_data=f"admin_btn_type_message_{message_id}")
-                        ],
-                        [
-                            InlineKeyboardButton("🔙 Назад", callback_data="admin_button_management")
-                        ]
-                    ]
-                    
+                    state['action_data'] = url
+                    state['step'] = 'text_input'
                     await update.message.reply_text(
-                        "✅ Текст кнопки сохранен!\n\n"
-                        "Шаг 2/5: Выберите тип кнопки:\n\n"
-                        "<i>Callback — внутренний переход, URL — внешняя ссылка, Message — переход на другое сообщение.</i>",
-                        reply_markup=InlineKeyboardMarkup(buttons),
-                        parse_mode=ParseMode.HTML
-                    )
-                elif step == 'action':
-                    action_data = update.message.text.strip()
-                    
-                    # Валидация URL
-                    if state.get('button_type') == 'url':
-                        if not action_data.startswith(('http://', 'https://')):
-                            await update.message.reply_text(
-                                "❌ URL должен начинаться с http:// или https://\n\n"
-                                "<i>Пример: https://t.me/saule_prodengi</i>\n"
-                                "Попробуйте еще раз:",
-                                reply_markup=get_back_to_button_management_keyboard(user_id),
-                                parse_mode=ParseMode.HTML
-                            )
-                            return
-                    
-                    state['action_data'] = action_data
-                    state['step'] = 'row'
-                    await update.message.reply_text(
-                        "✅ Действие сохранено!\n\n"
-                        "Шаг 4/5: Введите номер строки (начиная с 0):\n\n"
-                        "<i>Строки нумеруются сверху вниз: 0 — первая, 1 — вторая и т.д.</i>",
+                        "✅ Ссылка сохранена!\n\n"
+                        "Теперь введите <b>текст на кнопке</b>:",
                         reply_markup=get_back_to_button_management_keyboard(user_id),
                         parse_mode=ParseMode.HTML
                     )
-                elif step == 'row':
-                    try:
-                        row = int(update.message.text.strip())
-                        state['row'] = row
-                        state['step'] = 'order'
-                        await update.message.reply_text(
-                            "✅ Строка сохранена!\n\n"
-                            "Шаг 5/5: Введите порядок в строке (начиная с 0):\n\n"
-                            "<i>0 — крайняя левая позиция, 1 — следующая справа и так далее.</i>",
-                            reply_markup=get_back_to_button_management_keyboard(user_id),
-                            parse_mode=ParseMode.HTML
-                        )
-                    except ValueError:
-                        await update.message.reply_text(
-                            "❌ Введите число! Попробуйте еще раз:\n\n"
-                            "<i>Используйте только цифры, например 0 или 1.</i>",
-                            reply_markup=get_back_to_button_management_keyboard(user_id),
-                            parse_mode=ParseMode.HTML
-                        )
-                elif step == 'order':
-                    try:
-                        order = int(update.message.text.strip())
-                        # Создаем кнопку
-                        button = create_button(
-                            db,
-                            state['message_id'],
-                            state['text'],
-                            state['button_type'],
-                            state['action_data'],
-                            state['row'],
-                            order
-                        )
-                        del ADMIN_BUTTON_STATES[user_id]
-                        await update.message.reply_text(
-                            f"✅ Кнопка '{button.text}' успешно создана!\n\n"
-                            "<i>Вернитесь к списку кнопок, чтобы проверить расположение или добавить новые.</i>",
-                            reply_markup=get_back_to_button_management_keyboard(user_id),
-                            parse_mode=ParseMode.HTML
-                        )
-                    except ValueError:
-                        await update.message.reply_text(
-                            "❌ Введите число! Попробуйте еще раз:\n\n"
-                            "<i>Используйте только цифры, например 0 или 1.</i>",
-                            reply_markup=get_back_to_button_management_keyboard(user_id),
-                            parse_mode=ParseMode.HTML
-                        )
+                    
+                elif step == 'text_input':
+                    text = update.message.text.strip()
+                    # Auto-calculate position (add to bottom)
+                    buttons = get_buttons_for_message(db, message_id)
+                    max_row = max([b.row for b in buttons]) if buttons else -1
+                    new_row = max_row + 1
+                    
+                    create_button(
+                        db,
+                        message_id,
+                        text,
+                        state['button_type'],
+                        state['action_data'],
+                        row=new_row,
+                        order=0
+                    )
+                    
+                    del ADMIN_BUTTON_STATES[user_id]
+                    await update.message.reply_text(
+                        f"✅ Кнопка '{text}' успешно добавлена!\n\n"
+                        "<i>Она появилась в самом низу списка кнопок сообщения.</i>",
+                        reply_markup=get_back_to_button_management_keyboard(user_id),
+                        parse_mode=ParseMode.HTML
+                    )
                 return
             
             elif action == 'edit_message_text':
