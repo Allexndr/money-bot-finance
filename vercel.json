@@ -1,6 +1,6 @@
 {
     "framework": "nextjs",
-    "buildCommand": "next build",
-    "installCommand": "npm install",
-    "outputDirectory": ".next"
+    "installCommand": "cd simple-webhook && npm install",
+    "buildCommand": "cd simple-webhook && npm run build",
+    "outputDirectory": "simple-webhook/.next"
 }
