@@ -1611,7 +1611,28 @@ def main():
     application.add_handler(CallbackQueryHandler(handle_callback_query))
     
     # Запускаем бота
+    # Запускаем бота
     logger.info("Бот запущен!")
+    
+    # CLEANUP LEFTOVERS: Удаляем demo_access из базы данных при каждом запуске
+    # это временная мера для очистки продакшн базы
+    from database import SessionLocal, BotMessage, BotButton
+    db_cleanup = SessionLocal()
+    try:
+        deleted_msgs = db_cleanup.query(BotMessage).filter(BotMessage.page_key == 'demo_access').delete()
+        if deleted_msgs:
+            logger.info(f"🧹 Startup Cleanup: Deleted {deleted_msgs} demo_access messages.")
+            
+        deleted_btns = db_cleanup.query(BotButton).filter(BotButton.action_data == 'demo_access').delete()
+        if deleted_btns:
+            logger.info(f"🧹 Startup Cleanup: Deleted {deleted_btns} demo_access buttons.")
+            
+        db_cleanup.commit()
+    except Exception as e:
+        logger.error(f"Cleanup error: {e}")
+    finally:
+        db_cleanup.close()
+    
     application.run_polling(allowed_updates=Update.ALL_TYPES)
 
 if __name__ == '__main__':
