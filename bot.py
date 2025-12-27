@@ -683,15 +683,30 @@ async def handle_admin_callback(query, context, data):
     elif data.startswith("admin_create_button_msg_"):
         message_id = int(data.split("_")[-1])
         user_id = query.from_user.id
+        
+        # New Simplified Flow: Start by asking for Type
         ADMIN_BUTTON_STATES[user_id] = {
             'action': 'create_button',
-            'step': 'text',
+            'step': 'initial_type_selection',
             'message_id': message_id
         }
+        
+        text = "➕ <b>ДОБАВЛЕНИЕ КНОПКИ</b>\n\n"
+        text += "Что эта кнопка должна делать?\n\n"
+        
+        buttons = [
+            [
+                InlineKeyboardButton("🔗 Открыть ссылку", callback_data=f"admin_btn_creation_type_url_{message_id}"),
+                InlineKeyboardButton("📄 Открыть страницу", callback_data=f"admin_btn_creation_type_message_{message_id}")
+            ],
+            [
+                InlineKeyboardButton("🔙 Отмена", callback_data=f"admin_edit_message_{message_id}")
+            ]
+        ]
+        
         await query.edit_message_text(
-            "➕ <b>СОЗДАНИЕ КНОПКИ</b>\n\n"
-            "Шаг 1/5: Введите текст кнопки:",
-            reply_markup=get_back_to_button_management_keyboard(user_id),
+            text,
+            reply_markup=InlineKeyboardMarkup(buttons),
             parse_mode=ParseMode.HTML
         )
     elif data.startswith("admin_edit_msg_text_"):
