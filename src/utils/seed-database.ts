@@ -70,5 +70,23 @@ export async function seedDatabase() {
     }
   }
 
+  // CLEANUP: Удаляем demo_access если существует (для очистки продакшн базы)
+  try {
+    const demoMsg = await BotManager.getMessageByKey('demo_access');
+    if (demoMsg) {
+      console.log('🧹 Cleanup: Found ' + demoMsg.id + ' demo_access message, deleting...');
+      // Сначала удаляем кнопки
+      const buttons = await BotManager.getButtonsForMessage(demoMsg.id);
+      for (const btn of buttons) {
+        await BotManager.deleteButton(btn.id);
+      }
+      // Удаляем сообщение
+      await BotManager.deleteMessage(demoMsg.id);
+      console.log('✅ Cleanup: demo_access deleted.');
+    }
+  } catch (e) {
+    console.error('Cleanup error:', e);
+  }
+
   console.log('✅ Database seeded successfully');
 }
