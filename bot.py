@@ -692,12 +692,12 @@ async def handle_admin_callback(query, context, data):
         }
         
         text = "➕ <b>ДОБАВЛЕНИЕ КНОПКИ</b>\n\n"
-        text += "Что эта кнопка должна делать?\n\n"
+        text += "<b>Куда должна вести эта кнопка?</b>\n\n"
         
         buttons = [
             [
-                InlineKeyboardButton("🔗 Открыть ссылку", callback_data=f"admin_btn_creation_type_url_{message_id}"),
-                InlineKeyboardButton("📄 Открыть страницу", callback_data=f"admin_btn_creation_type_message_{message_id}")
+                InlineKeyboardButton("🔗 Ссылка на сайт", callback_data=f"admin_btn_creation_type_url_{message_id}"),
+                InlineKeyboardButton("📄 Другая страница", callback_data=f"admin_btn_creation_type_message_{message_id}")
             ],
             [
                 InlineKeyboardButton("🔙 Отмена", callback_data=f"admin_edit_message_{message_id}")
@@ -1100,8 +1100,8 @@ async def handle_admin_callback(query, context, data):
                 state['step'] = 'text_input'
                 
                 await query.edit_message_text(
-                    f"✅ Страница '{page_key}' выбрана!\n\n"
-                    "Теперь введите <b>текст на кнопке</b>:",
+                    f"✅ Выбрана страница: <b>{page_key}</b>\n\n"
+                    "Теперь <b>напишите текст кнопки</b> (то, что будет на ней написано).",
                     reply_markup=get_back_to_button_management_keyboard(user_id),
                     parse_mode=ParseMode.HTML
                 )
@@ -1119,9 +1119,9 @@ async def handle_admin_callback(query, context, data):
             if target_type == 'url':
                 state['step'] = 'url_input'
                 await query.edit_message_text(
-                    "🔗 <b>ВСТАВЬТЕ ССЫЛКУ</b>\n\n"
-                    "Отправьте боту полную ссылку (начиная с http:// или https://).\n"
-                    "Например: https://t.me/avto_voronka_bot",
+                    "🔗 <b>Отправьте ссылку</b>\n\n"
+                    "Просто пришлите ссылку, которая должна открываться при нажатии.\n"
+                    "<i>Обязательно с https:// (например: https://yandex.ru)</i>",
                     reply_markup=get_back_to_button_management_keyboard(user_id),
                     parse_mode=ParseMode.HTML
                 )
@@ -1145,8 +1145,8 @@ async def handle_admin_callback(query, context, data):
                     page_buttons.append([InlineKeyboardButton("🔙 Отмена", callback_data=f"admin_create_button_msg_{message_id}")])
                     
                     await query.edit_message_text(
-                        "📄 <b>ВЫБЕРИТЕ СТРАНИЦУ</b>\n\n"
-                        "Какую страницу открыть при нажатии на кнопку?",
+                        "📄 <b>Куда должна вести кнопка?</b>\n\n"
+                        "Выберите страницу из списка ниже:",
                         reply_markup=InlineKeyboardMarkup(page_buttons),
                         parse_mode=ParseMode.HTML
                     )
