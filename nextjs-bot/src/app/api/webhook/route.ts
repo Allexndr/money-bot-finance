@@ -72,18 +72,26 @@ async function handleCallbackQuery(callbackQuery: TelegramCallbackQuery) {
   const { id: queryId, from: user, data } = callbackQuery;
   const chatId = callbackQuery.message?.chat.id;
 
-  if (!chatId) return;
+  if (!chatId || !data) return;
 
-  // Отвечаем на callback query
+  // Отвечаем на callback query (чтобы часики не висели) - handled inside AdminManager for admin events, but generally good here unless AdminManager handles it better.
+  // AdminManager answers it if it's admin.
+
+  if (data.startsWith('admin_')) {
+    const { AdminManager } = await import('@/utils/admin-manager');
+    await AdminManager.handleAdminCallback(callbackQuery);
+    return;
+  }
+
   await TelegramBot.answerCallbackQuery(queryId);
 
   // Проверяем, есть ли сообщение в базе данных с таким page_key
   const { BotManager } = await import('@/utils/bot-manager');
-  const dbMessage = await BotManager.getMessageByKey(data!);
+  const dbMessage = await BotManager.getMessageByKey(data);
 
   if (dbMessage) {
     // Это переход на сообщение из базы данных
-    addToHistory(user.id, data!);
+    addToHistory(user.id, data);
     await showMessageFromDb(callbackQuery, dbMessage, user.id);
     return;
   }
@@ -123,16 +131,25 @@ async function handleMessage(message: TelegramMessage) {
   if (!user) return;
 
   const text = message.text;
-
   if (!text) return;
 
   // Обработка команд
   if (text.startsWith('/start')) {
     await handleStartCommand(chatId, user);
+  } else if (text.startsWith('/admin')) {
+    const { AdminManager } = await import('@/utils/admin-manager');
+    await AdminManager.handleAdminCommand(chatId, user.id);
   } else if (text.startsWith('/help')) {
     await TelegramBot.sendMessage(chatId, 'Это бот для управления финансами. Используйте /start для начала.');
+  } else {
+    // Check for Admin State Input
+    const { AdminManager } = await import('@/utils/admin-manager');
+    const handled = await AdminManager.handleUserInput(chatId, user.id, text);
+    if (!handled) {
+      // Default echo or ignore?
+      // await TelegramBot.sendMessage(chatId, `Вы написали: ${text}`);
+    }
   }
-  // Обработка других сообщений...
 }
 
 export async function POST(request: NextRequest) {

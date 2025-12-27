@@ -34,6 +34,14 @@ export class BotManager {
     });
   }
 
+  static async getMessageById(id: number): Promise<BotMessage | null> {
+    const prisma = getPrismaClient();
+    if (!prisma) return null;
+    return prisma.botMessage.findUnique({
+      where: { id: id },
+    });
+  }
+
   static async getButtonsForMessage(messageId: number): Promise<BotButton[]> {
     const prisma = getPrismaClient();
     if (!prisma) return [];

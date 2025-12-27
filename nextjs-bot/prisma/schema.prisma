@@ -75,3 +75,14 @@ model BotButton {
 
   @@map("bot_buttons")
 }
+
+model BotState {
+  id           Int      @id @default(autoincrement())
+  telegram_id  Int      @unique
+  action       String   // e.g. "admin_create_button"
+  step         String   // e.g. "type_selection"
+  data         String   // JSON string
+  updated_at   DateTime @updatedAt
+
+  @@map("bot_states")
+}
