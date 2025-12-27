@@ -345,10 +345,7 @@ async def admin_manage_messages_callback(query, context, intro: bool = False):
     """Список всех сообщений для управления"""
     db = SessionLocal()
     try:
-        try:
-            ensure_default_messages(db)
-        except Exception as e:
-            logger.error(f"Error ensuring default messages: {e}")
+        # ensure_default_messages(db) - Moved to startup/start command only
             
         messages = get_all_messages(db)
         
