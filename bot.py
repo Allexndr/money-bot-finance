@@ -1441,19 +1441,7 @@ async def handle_newsletter_input(update: Update, context: ContextTypes.DEFAULT_
                     )
                 return
             
-            elif action == 'edit_message_text':
-                message_id = state.get('message_id')
-                new_text = update.message.text
-                message = update_message(db, message_id, text=new_text)
-                if message:
-                    del ADMIN_BUTTON_STATES[user_id]
-                    await update.message.reply_text(
-                        "✅ Текст сообщения обновлен!\n\n"
-                        "<i>Откройте превью или раздел кнопок, чтобы убедиться в результате.</i>",
-                        reply_markup=get_back_to_button_management_keyboard(user_id),
-                        parse_mode=ParseMode.HTML
-                    )
-                return
+
             
             elif action == 'edit_message_title':
                 message_id = state.get('message_id')
