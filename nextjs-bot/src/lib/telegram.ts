@@ -1,4 +1,4 @@
-import { TelegramInlineKeyboardMarkup } from '@/types/telegram';
+import { TelegramInlineKeyboardMarkup } from '../types/telegram';
 
 const BOT_TOKEN = process.env.BOT_TOKEN!;
 const BASE_URL = `https://api.telegram.org/bot${BOT_TOKEN}`;

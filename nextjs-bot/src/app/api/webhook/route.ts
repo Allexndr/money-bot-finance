@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { TelegramUpdate, TelegramCallbackQuery, TelegramMessage } from '@/types/telegram';
-import { TelegramBot } from '@/lib/telegram';
-import { AdminManager } from '@/utils/admin-manager';
-import { BotManager } from '@/utils/bot-manager';
+import { TelegramUpdate, TelegramCallbackQuery, TelegramMessage } from '../../../types/telegram';
+import { TelegramBot } from '../../../lib/telegram';
+import { AdminManager } from '../../../utils/admin-manager';
+import { BotManager } from '../../../utils/bot-manager';
+import { getPrismaClient } from '../../../lib/prisma';
 
 const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET;
 
@@ -31,9 +32,6 @@ function getPreviousPage(userId: number): string | null {
 }
 
 async function handleStartCommand(chatId: number, user: any) {
-  const { getPrismaClient } = await import('@/lib/prisma');
-  // const { BotManager } = await import('@/utils/bot-manager');
-
   const prisma = getPrismaClient();
   if (prisma) {
     // Создаем или обновляем пользователя

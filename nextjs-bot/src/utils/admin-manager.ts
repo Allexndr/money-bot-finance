@@ -1,7 +1,7 @@
-import { TelegramBot } from '@/lib/telegram';
-import { BotManager } from '@/utils/bot-manager';
-import { getPrismaClient } from '@/lib/prisma';
-import { TelegramCallbackQuery, TelegramMessage, TelegramInlineKeyboardButton, TelegramInlineKeyboardMarkup } from '@/types/telegram';
+import { TelegramBot } from '../lib/telegram';
+import { BotManager } from './bot-manager';
+import { getPrismaClient } from '../lib/prisma';
+import { TelegramCallbackQuery, TelegramMessage, TelegramInlineKeyboardButton, TelegramInlineKeyboardMarkup } from '../types/telegram';
 
 const ADMIN_IDS = [5450018125, 235639622, 6682947818]; // Add IDs here
 

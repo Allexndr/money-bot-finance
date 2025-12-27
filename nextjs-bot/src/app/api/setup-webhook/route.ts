@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { TelegramBot } from '@/lib/telegram';
+import { TelegramBot } from '../../../lib/telegram';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';

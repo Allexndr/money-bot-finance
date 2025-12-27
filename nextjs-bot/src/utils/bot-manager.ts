@@ -1,5 +1,5 @@
-import { getPrismaClient } from '@/lib/prisma';
-import { TelegramInlineKeyboardButton, TelegramInlineKeyboardMarkup } from '@/types/telegram';
+import { getPrismaClient } from '../lib/prisma';
+import { TelegramInlineKeyboardButton, TelegramInlineKeyboardMarkup } from '../types/telegram';
 
 export interface BotMessage {
   id: number;
