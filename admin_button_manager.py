@@ -386,11 +386,20 @@ async def admin_manage_messages_callback(query, context, intro: bool = False):
         buttons_layout.append([InlineKeyboardButton("➕ Создать страницу", callback_data="admin_create_message")])
         buttons_layout.append([InlineKeyboardButton("🔙 Назад", callback_data="admin_panel")])
         
-        await query.edit_message_text(
-            text,
-            reply_markup=InlineKeyboardMarkup(buttons_layout),
-            parse_mode=ParseMode.HTML
-        )
+        try:
+            await query.edit_message_text(
+                text,
+                reply_markup=InlineKeyboardMarkup(buttons_layout),
+                parse_mode=ParseMode.HTML
+            )
+        except Exception as e:
+            # If "Message is not modified" error, we can ignore it or just answer callback
+            logger.warning(f"Message edit warning: {e}")
+            try:
+                # Try to send as a new message if edit fails? No, just answer.
+                await query.answer() 
+            except:
+                pass
     finally:
         db.close()
 
