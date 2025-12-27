@@ -243,4 +243,17 @@ def ensure_default_messages(db: Session):
             )
 
         db.commit()
+    
+    # Explicit CleanUp of legacy/deleted content
+    legacy_keys = ['demo_access']
+    for key in legacy_keys:
+        msg = get_message_by_key(db, key)
+        if msg:
+            delete_message(db, msg.id)
+            print(f"🧹 Deleted legacy message: {key}")
+            
+    # Remove any buttons pointing to legacy content
+    for key in legacy_keys:
+        db.query(BotButton).filter(BotButton.action_data == key).delete()
+        db.commit()
 
