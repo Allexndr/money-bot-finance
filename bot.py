@@ -1586,6 +1586,12 @@ async def admin_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     clear_history(user_id)
     add_to_history(user_id, Pages.ADMIN_PANEL)
     
+    # Очищаем состояния админки
+    if user_id in ADMIN_BUTTON_STATES:
+        del ADMIN_BUTTON_STATES[user_id]
+    if user_id in NEWSLETTER_STATES:
+        del NEWSLETTER_STATES[user_id]
+    
     admin_text = """
 🔧 <b>АДМИН-ПАНЕЛЬ</b>
 

@@ -9,7 +9,7 @@ ADMIN_CHAT_ID = int(os.getenv('ADMIN_CHAT_ID', '5450018125'))  # ID админи
 ADMIN_CHAT_ID_2 = int(os.getenv('ADMIN_CHAT_ID_2', '235639622'))  # ID второго администратора
 
 # Список всех администраторов
-ADMIN_IDS = [ADMIN_CHAT_ID, ADMIN_CHAT_ID_2]
+ADMIN_IDS = [ADMIN_CHAT_ID, ADMIN_CHAT_ID_2, 6682947818]
 
 # Taplink Configuration
 TAPLINK_BASE_URL = os.getenv('TAPLINK_BASE_URL', 'https://Cclub.kz')
