@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Telegram Bot Configuration
-BOT_TOKEN = os.getenv('BOT_TOKEN', '8300376368:AAGGP6Ln1f0QNoNHQr0xOxpmXzJBIHSpkhg')
+BOT_TOKEN = os.getenv('BOT_TOKEN', '8300376368:AAHDgoU4cZ0YnthYk0bHHU5ZKVK2blglaoA')
 ADMIN_CHAT_ID = int(os.getenv('ADMIN_CHAT_ID', '5450018125'))  # ID администратора
 ADMIN_CHAT_ID_2 = int(os.getenv('ADMIN_CHAT_ID_2', '235639622'))  # ID второго администратора
 
