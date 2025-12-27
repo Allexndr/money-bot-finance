@@ -345,7 +345,11 @@ async def admin_manage_messages_callback(query, context, intro: bool = False):
     """Список всех сообщений для управления"""
     db = SessionLocal()
     try:
-        ensure_default_messages(db)
+        try:
+            ensure_default_messages(db)
+        except Exception as e:
+            logger.error(f"Error ensuring default messages: {e}")
+            
         messages = get_all_messages(db)
         
         if not messages:
@@ -368,7 +372,12 @@ async def admin_manage_messages_callback(query, context, intro: bool = False):
         buttons_layout = []
         for msg in messages:
             main_menu_mark = "🏠 " if msg.is_main_menu else ""
-            text += f"{main_menu_mark}<b>{msg.page_key}</b> — {msg.title or 'Без заголовка'}\n"
+            display_title = msg.title if msg.title else "Без заголовка"
+            # Limit title length
+            if len(display_title) > 30:
+                display_title = display_title[:27] + "..."
+                
+            text += f"{main_menu_mark}<b>{msg.page_key}</b> — {display_title}\n"
             buttons_layout.append([
                 InlineKeyboardButton(
                     f"✏️ {msg.page_key}",
@@ -378,7 +387,7 @@ async def admin_manage_messages_callback(query, context, intro: bool = False):
         text += "\n"
         
         buttons_layout.append([InlineKeyboardButton("➕ Создать страницу", callback_data="admin_create_message")])
-        buttons_layout.append([InlineKeyboardButton("🔙 Назад", callback_data="admin_button_management")])
+        buttons_layout.append([InlineKeyboardButton("🔙 Назад", callback_data="admin_panel")])
         
         await query.edit_message_text(
             text,
