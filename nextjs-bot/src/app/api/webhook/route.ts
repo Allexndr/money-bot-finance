@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { TelegramUpdate, TelegramCallbackQuery, TelegramMessage } from '@/types/telegram';
 import { TelegramBot } from '@/lib/telegram';
+import { AdminManager } from '@/utils/admin-manager';
+import { BotManager } from '@/utils/bot-manager';
 
 const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET;
 
@@ -30,7 +32,7 @@ function getPreviousPage(userId: number): string | null {
 
 async function handleStartCommand(chatId: number, user: any) {
   const { getPrismaClient } = await import('@/lib/prisma');
-  const { BotManager } = await import('@/utils/bot-manager');
+  // const { BotManager } = await import('@/utils/bot-manager');
 
   const prisma = getPrismaClient();
   if (prisma) {
@@ -78,7 +80,7 @@ async function handleCallbackQuery(callbackQuery: TelegramCallbackQuery) {
   // AdminManager answers it if it's admin.
 
   if (data.startsWith('admin_')) {
-    const { AdminManager } = await import('@/utils/admin-manager');
+    // const { AdminManager } = await import('@/utils/admin-manager');
     await AdminManager.handleAdminCallback(callbackQuery);
     return;
   }
@@ -86,7 +88,7 @@ async function handleCallbackQuery(callbackQuery: TelegramCallbackQuery) {
   await TelegramBot.answerCallbackQuery(queryId);
 
   // Проверяем, есть ли сообщение в базе данных с таким page_key
-  const { BotManager } = await import('@/utils/bot-manager');
+  // const { BotManager } = await import('@/utils/bot-manager');
   const dbMessage = await BotManager.getMessageByKey(data);
 
   if (dbMessage) {
@@ -114,7 +116,7 @@ async function showMessageFromDb(callbackQuery: TelegramCallbackQuery, message: 
 
   if (!chatId || !messageId) return;
 
-  const { BotManager } = await import('@/utils/bot-manager');
+  // const { BotManager } = await import('@/utils/bot-manager');
   const keyboard = await BotManager.buildKeyboardFromDb(message.id, userId);
   const text = message.title ? `${message.title}\n\n${message.text}` : message.text;
 
@@ -137,13 +139,13 @@ async function handleMessage(message: TelegramMessage) {
   if (text.startsWith('/start')) {
     await handleStartCommand(chatId, user);
   } else if (text.startsWith('/admin')) {
-    const { AdminManager } = await import('@/utils/admin-manager');
+    // const { AdminManager } = await import('@/utils/admin-manager');
     await AdminManager.handleAdminCommand(chatId, user.id);
   } else if (text.startsWith('/help')) {
     await TelegramBot.sendMessage(chatId, 'Это бот для управления финансами. Используйте /start для начала.');
   } else {
     // Check for Admin State Input
-    const { AdminManager } = await import('@/utils/admin-manager');
+    // const { AdminManager } = await import('@/utils/admin-manager');
     const handled = await AdminManager.handleUserInput(chatId, user.id, text);
     if (!handled) {
       // Default echo or ignore?
