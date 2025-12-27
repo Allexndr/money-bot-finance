@@ -23,7 +23,7 @@ const DEFAULT_MESSAGES = {
       { text: "💰 Купить Курс 'Деньги в радости'", type: "callback", action: "course_buy", row: 5, order: 0 },
       { text: "🎬 Купить запись 2-го потока Квеста", type: "callback", action: "buy_quest", row: 6, order: 0 },
       { text: "💬 Консультация", type: "callback", action: "consultation", row: 7, order: 0 },
-      { text: "🎁 Демо-доступ", type: "callback", action: "demo_access", row: 8, order: 0 },
+
       { text: "ℹ️ О боте", type: "callback", action: "about", row: 9, order: 0 },
     ],
   },

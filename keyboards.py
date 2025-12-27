@@ -22,9 +22,7 @@ def get_main_menu_keyboard(user_id: int = None):
         [
             InlineKeyboardButton("💬 Консультация", callback_data="consultation")
         ],
-        [
-            InlineKeyboardButton("🎁 Демо-доступ", callback_data="demo_access")
-        ],
+
         [
             InlineKeyboardButton("ℹ️ О боте", callback_data="about")
         ]
