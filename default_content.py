@@ -21,7 +21,7 @@ DEFAULT_MESSAGES = {
             {"text": "💰 Купить Курс 'Деньги в радости'", "type": "callback", "action": "course_buy"},
             {"text": "🎬 Купить запись 2-го потока Квеста", "type": "callback", "action": "buy_quest"},
             {"text": "💬 Консультация", "type": "callback", "action": "consultation"},
-            {"text": "🎁 Демо-доступ", "type": "callback", "action": "demo_access"},
+
             {"text": "ℹ️ О боте", "type": "callback", "action": "about"},
         ],
     }
