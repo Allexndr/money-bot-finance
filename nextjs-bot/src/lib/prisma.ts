@@ -9,9 +9,7 @@ export function getPrismaClient() {
   if (!prisma) {
     try {
       const { PrismaClient } = require('@prisma/client');
-      prisma = new PrismaClient({
-        datasourceUrl: process.env.dengi_MONGODB_URI,
-      });
+      prisma = new PrismaClient();
 
       // Глобальное хранение только в development
       if (process.env.NODE_ENV !== 'production') {
