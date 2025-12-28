@@ -2,8 +2,8 @@ let prisma: any = null;
 
 export function getPrismaClient() {
   // Проверяем доступность переменных окружения
-  if (!process.env.DATABASE_URL && process.env.NODE_ENV === 'production') {
-    throw new Error('DATABASE_URL not configured');
+  if (!process.env.dengi_MONGODB_URI && process.env.NODE_ENV === 'production') {
+    throw new Error('dengi_MONGODB_URI not configured');
   }
 
   if (!prisma) {
