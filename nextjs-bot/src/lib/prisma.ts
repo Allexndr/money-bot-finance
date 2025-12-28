@@ -17,7 +17,7 @@ export function getPrismaClient() {
       }
     } catch (error) {
       // В случае ошибки во время сборки возвращаем null
-      console.warn('Prisma client not available during build');
+      console.error('Failed to initialize Prisma client:', error);
       return null;
     }
   }

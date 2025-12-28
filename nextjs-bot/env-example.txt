@@ -10,3 +10,4 @@ WEBHOOK_SECRET="your_webhook_secret_here"
 
 # Next.js
 NEXT_PUBLIC_APP_URL="https://your-app-name.vercel.app"
+

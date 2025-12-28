@@ -90,3 +90,4 @@ export interface TelegramSendMessageOptions {
   allow_sending_without_reply?: boolean;
   reply_markup?: TelegramInlineKeyboardMarkup;
 }
+
