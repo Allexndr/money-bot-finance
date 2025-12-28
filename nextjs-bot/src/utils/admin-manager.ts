@@ -94,14 +94,14 @@ export class AdminManager {
 
         if (data.startsWith('admin_edit_message_')) {
             // admin_edit_message_{id}
-            const msgId = parseInt(data.split('_').pop() || '0');
+            const msgId = data.split('_').pop() || '';
             await this.showEditMessage(chatId, messageId, msgId);
             return;
         }
 
         // Create Button Flow
         if (data.startsWith('admin_create_button_msg_')) {
-            const msgId = parseInt(data.split('_').pop() || '0');
+            const msgId = data.split('_').pop() || '';
 
             await this.setState(userId, ACTIONS.CREATE_BUTTON, STEPS.INITIAL_TYPE_SELECTION, { message_id: msgId });
 
@@ -125,7 +125,7 @@ export class AdminManager {
 
         if (data.startsWith('admin_btn_creation_type_')) {
             const parts = data.split('_');
-            const msgId = parseInt(parts.pop() || '0');
+            const msgId = parts.pop() || '';
             const type = parts.pop(); // 'url' or 'message'
 
             const state = await this.getState(userId);
@@ -172,7 +172,7 @@ export class AdminManager {
             // admin_create_btn_select_page_{msgId}_{pageKey}
             const parts = data.split('_');
             const pageKey = parts.pop();
-            const msgId = parseInt(parts.pop() || '0');
+            const msgId = parts.pop() || '';
 
             const state = await this.getState(userId);
             if (state) {
@@ -263,7 +263,7 @@ export class AdminManager {
         });
     }
 
-    static async showEditMessage(chatId: number, messageId: number | undefined, targetMsgId: number, isNewMessage: boolean = false) {
+    static async showEditMessage(chatId: number, messageId: number | undefined, targetMsgId: string, isNewMessage: boolean = false) {
         const msg = await BotManager.getMessageById(targetMsgId);
         if (!msg) {
             if (messageId) {

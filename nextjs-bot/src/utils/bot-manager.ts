@@ -2,7 +2,7 @@ import { getPrismaClient } from '../lib/prisma';
 import { TelegramInlineKeyboardButton, TelegramInlineKeyboardMarkup } from '../types/telegram';
 
 export interface BotMessage {
-  id: number;
+  id: string;
   page_key: string;
   title?: string;
   text: string;
@@ -13,8 +13,8 @@ export interface BotMessage {
 }
 
 export interface BotButton {
-  id: number;
-  message_id: number;
+  id: string;
+  message_id: string;
   text: string;
   button_type: string; // 'callback', 'url', 'message'
   action_data: string;
@@ -34,7 +34,7 @@ export class BotManager {
     });
   }
 
-  static async getMessageById(id: number): Promise<BotMessage | null> {
+  static async getMessageById(id: string): Promise<BotMessage | null> {
     const prisma = getPrismaClient();
     if (!prisma) return null;
     return prisma.botMessage.findUnique({
@@ -42,7 +42,7 @@ export class BotManager {
     });
   }
 
-  static async getButtonsForMessage(messageId: number): Promise<BotButton[]> {
+  static async getButtonsForMessage(messageId: string): Promise<BotButton[]> {
     const prisma = getPrismaClient();
     if (!prisma) return [];
     return prisma.botButton.findMany({
@@ -58,7 +58,7 @@ export class BotManager {
   }
 
   static async buildKeyboardFromDb(
-    messageId: number,
+    messageId: string,
     userId?: number,
     callbackPrefix: string = "nav",
     addBackButton: boolean = true
@@ -147,7 +147,7 @@ export class BotManager {
   }
 
   static async updateMessage(
-    id: number,
+    id: string,
     data: Partial<{
       page_key: string;
       title: string | null;
@@ -164,7 +164,7 @@ export class BotManager {
     });
   }
 
-  static async deleteMessage(id: number): Promise<BotMessage> {
+  static async deleteMessage(id: string): Promise<BotMessage> {
     const prisma = getPrismaClient();
     if (!prisma) throw new Error('Database not available');
     return prisma.botMessage.delete({
@@ -173,7 +173,7 @@ export class BotManager {
   }
 
   static async createButton(data: {
-    message_id: number;
+    message_id: string;
     text: string;
     button_type: string;
     action_data: string;
@@ -195,7 +195,7 @@ export class BotManager {
   }
 
   static async updateButton(
-    id: number,
+    id: string,
     data: Partial<{
       text: string;
       button_type: string;
@@ -213,7 +213,7 @@ export class BotManager {
     });
   }
 
-  static async deleteButton(id: number): Promise<BotButton> {
+  static async deleteButton(id: string): Promise<BotButton> {
     const prisma = getPrismaClient();
     if (!prisma) throw new Error('Database not available');
     return prisma.botButton.delete({
