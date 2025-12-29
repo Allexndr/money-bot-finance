@@ -10,6 +10,8 @@ const ACTIONS = {
     CREATE_BUTTON: 'create_button',
     EDIT_MESSAGE_TEXT: 'edit_message_text',
     EDIT_MESSAGE_TITLE: 'edit_message_title',
+    EDIT_BUTTON_TEXT: 'edit_button_text',
+    EDIT_BUTTON_URL: 'edit_button_url',
 };
 
 const STEPS = {
@@ -223,11 +225,15 @@ export class AdminManager {
                         { text: "⬆️", callback_data: `admin_move_btn_up_${btnId}_up` },
                         { text: "⬇️", callback_data: `admin_move_btn_up_${btnId}_down` }
                     ],
+                    [
+                        { text: "✏️ Текст", callback_data: `admin_edit_btn_text_${btnId}` },
+                        { text: "🔗 Ссылка", callback_data: `admin_edit_btn_url_${btnId}` }
+                    ],
                     [{ text: "❌ Удалить кнопку", callback_data: `admin_delete_btn_${btnId}` }],
                     [{ text: "🔙 Назад", callback_data: `admin_edit_message_${btn.message_id}` }]
                 ];
 
-                await TelegramBot.editMessageText(chatId, messageId, `Настройка кнопки: <b>${btn.text}</b>`, {
+                await TelegramBot.editMessageText(chatId, messageId, `Настройка кнопки: <b>${btn.text}</b>\n\nТекущая ссылка/данные: ${btn.action_data}`, {
                     parse_mode: 'HTML',
                     reply_markup: { inline_keyboard: buttons }
                 });
@@ -235,6 +241,40 @@ export class AdminManager {
                 await TelegramBot.editMessageText(chatId, messageId, "❌ Кнопка не найдена", {
                     reply_markup: { inline_keyboard: [[{ text: "🔙 Назад", callback_data: "admin_panel" }]] }
                 });
+            }
+            return;
+        }
+
+        if (data.startsWith('admin_edit_btn_text_')) {
+            const btnId = data.split('_').pop() || '';
+            const btn = await getPrismaClient()?.botButton.findUnique({ where: { id: btnId } });
+            if (btn) {
+                await this.setState(userId, ACTIONS.EDIT_BUTTON_TEXT, STEPS.TEXT_INPUT, { button_id: btnId });
+                await TelegramBot.editMessageText(chatId, messageId, `✏️ <b>Введите новый текст для кнопки:</b>\n\nТекущий: ${btn.text}`, {
+                    parse_mode: 'HTML',
+                    reply_markup: { inline_keyboard: [[{ text: "🔙 Отмена", callback_data: `admin_manage_btn_${btnId}` }]] }
+                });
+            }
+            return;
+        }
+
+        if (data.startsWith('admin_edit_btn_url_')) {
+            const btnId = data.split('_').pop() || '';
+            const btn = await getPrismaClient()?.botButton.findUnique({ where: { id: btnId } });
+            if (btn) {
+                // Check if it's URL type or Callback type
+                if (btn.button_type === 'url') {
+                    await this.setState(userId, ACTIONS.EDIT_BUTTON_URL, STEPS.TEXT_INPUT, { button_id: btnId });
+                    await TelegramBot.editMessageText(chatId, messageId, `🔗 <b>Введите новую ссылку:</b>\n\nТекущая: ${btn.action_data}`, {
+                        parse_mode: 'HTML',
+                        reply_markup: { inline_keyboard: [[{ text: "🔙 Отмена", callback_data: `admin_manage_btn_${btnId}` }]] }
+                    });
+                } else {
+                    // For callback/message buttons, we might want to re-select the page?
+                    // For simplicity now, let's treat it as text input for action_data (advanced) or just re-pick page
+                    // Let's implement re-picking page later if needed, for now just text input for simplicity implies changing URL
+                    await TelegramBot.answerCallbackQuery(query.id, { text: "Редактирование цели для внутренних кнопок пока через пересоздание", show_alert: true });
+                }
             }
             return;
         }
@@ -388,6 +428,34 @@ export class AdminManager {
             await this.clearState(userId);
             await TelegramBot.sendMessage(chatId, "✅ <b>Заголовок обновлен!</b>", { parse_mode: 'HTML' });
             await this.showEditMessage(chatId, undefined, stateData.message_id, true);
+            return true;
+        }
+
+        if (state.action === ACTIONS.EDIT_BUTTON_TEXT) {
+            const btn = await BotManager.updateButton(stateData.button_id, { text: text });
+            await this.clearState(userId);
+            await TelegramBot.sendMessage(chatId, "✅ <b>Текст кнопки обновлен!</b>", { parse_mode: 'HTML' });
+            // Ideally go back to manage button view, but we need msgId. Let's go to msg edit view
+            if (btn) {
+                const fullBtn = await getPrismaClient()?.botButton.findUnique({ where: { id: btn.id } });
+                await this.showEditMessage(chatId, undefined, fullBtn?.message_id || '', true);
+            }
+            return true;
+        }
+
+        if (state.action === ACTIONS.EDIT_BUTTON_URL) {
+            // Validate URL roughly
+            if (!text.startsWith('http')) {
+                await TelegramBot.sendMessage(chatId, "❌ <b>Ошибка!</b> Ссылка должна начинаться с https://\nПопробуйте еще раз:", { parse_mode: 'HTML' });
+                return true; // Keep state
+            }
+            const btn = await BotManager.updateButton(stateData.button_id, { action_data: text });
+            await this.clearState(userId);
+            await TelegramBot.sendMessage(chatId, "✅ <b>Ссылка кнопки обновлена!</b>", { parse_mode: 'HTML' });
+            if (btn) {
+                const fullBtn = await getPrismaClient()?.botButton.findUnique({ where: { id: btn.id } });
+                await this.showEditMessage(chatId, undefined, fullBtn?.message_id || '', true);
+            }
             return true;
         }
 
