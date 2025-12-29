@@ -3,7 +3,7 @@ import { BotManager } from './bot-manager';
 
 const DEFAULT_MESSAGES = {
   main_menu: {
-    title: "🎉 Добро пожаловать в бот психолога Сауле Сайфуллиной!",
+    title: "🎉 Бот психолога Сауле Сайфуллиной",
     text: (
       "Я помогу вам:\n" +
       "• Перейти в Сообщество 5-го потока Квеста \"Денежный прорыв\"\n" +
@@ -66,6 +66,13 @@ export async function seedDatabase() {
       }
     } else {
       console.log(`Message ${pageKey} already exists`);
+      // Force update title to fix "bot psikh" truncation issue
+      if (pageKey === 'main_menu') {
+        await BotManager.updateMessage(existingMessage.id, {
+          title: messageData.title
+        });
+        console.log(`Updated title for ${pageKey}`);
+      }
     }
   }
 
