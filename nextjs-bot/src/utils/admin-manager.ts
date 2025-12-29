@@ -191,6 +191,116 @@ export class AdminManager {
             }
             return;
         }
+        // Create Page Flow
+        if (data === 'admin_create_page_start') {
+            await this.setState(userId, 'create_page', 'enter_key', {});
+            await TelegramBot.editMessageText(chatId, messageId,
+                "🆕 <b>Создание новой страницы</b>\n\nВведите уникальный <b>ключ страницы</b> (только латинские буквы, например: <code>about_us</code>, <code>contacts</code>):",
+                { parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: "🔙 Отмена", callback_data: "admin_button_management" }]] } }
+            );
+            return;
+        }
+
+        // Delete Page Flow
+        if (data.startsWith('admin_delete_page_')) {
+            const msgId = data.split('_').pop() || '';
+            await BotManager.deleteMessage(msgId);
+            await TelegramBot.answerCallbackQuery(query.id, { text: "Страница удалена" });
+            await this.showButtonManagement(chatId, messageId);
+            return;
+        }
+
+        // Manage Button Flow (Delete for now, can extend to Edit later)
+        if (data.startsWith('admin_manage_btn_')) {
+            const btnId = data.split('_').pop() || '';
+
+            // To properly go back, we need the message ID. Let's fetch the button to get message_id
+            const btn = await getPrismaClient()?.botButton.findUnique({ where: { id: btnId } });
+
+            if (btn) {
+                const buttons: TelegramInlineKeyboardButton[][] = [
+                    [
+                        { text: "⬆️", callback_data: `admin_move_btn_up_${btnId}_up` },
+                        { text: "⬇️", callback_data: `admin_move_btn_up_${btnId}_down` }
+                    ],
+                    [{ text: "❌ Удалить кнопку", callback_data: `admin_delete_btn_${btnId}` }],
+                    [{ text: "🔙 Назад", callback_data: `admin_edit_message_${btn.message_id}` }]
+                ];
+
+                await TelegramBot.editMessageText(chatId, messageId, `Настройка кнопки: <b>${btn.text}</b>`, {
+                    parse_mode: 'HTML',
+                    reply_markup: { inline_keyboard: buttons }
+                });
+            } else {
+                await TelegramBot.editMessageText(chatId, messageId, "❌ Кнопка не найдена", {
+                    reply_markup: { inline_keyboard: [[{ text: "🔙 Назад", callback_data: "admin_panel" }]] }
+                });
+            }
+            return;
+        }
+
+        if (data.startsWith('admin_delete_btn_')) {
+            const btnId = data.split('_').pop() || '';
+            const btn = (await getPrismaClient()?.botButton.findUnique({ where: { id: btnId } }));
+            if (btn) {
+                await BotManager.deleteButton(btnId);
+                await TelegramBot.answerCallbackQuery(query.id, { text: "Кнопка удалена" });
+                await this.showEditMessage(chatId, messageId, btn.message_id);
+            }
+            return;
+        }
+
+        // Edit Message Text/Title handlers
+        if (data.startsWith('admin_edit_msg_text_')) {
+            const msgId = data.split('_').pop() || '';
+            await this.setState(userId, ACTIONS.EDIT_MESSAGE_TEXT, STEPS.TEXT_INPUT, { message_id: msgId });
+            await TelegramBot.editMessageText(chatId, messageId, "📝 <b>Введите новый текст сообщения:</b>\n(Поддерживается HTML разметка)", {
+                parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: "🔙 Отмена", callback_data: `admin_edit_message_${msgId}` }]] }
+            });
+            return;
+        }
+
+        if (data.startsWith('admin_edit_msg_title_')) {
+            const msgId = data.split('_').pop() || '';
+            await this.setState(userId, ACTIONS.EDIT_MESSAGE_TITLE, STEPS.TEXT_INPUT, { message_id: msgId });
+            await TelegramBot.editMessageText(chatId, messageId, "🏷 <b>Введите новый заголовок (для админки):</b>", {
+                parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: "🔙 Отмена", callback_data: `admin_edit_message_${msgId}` }]] }
+            });
+            return;
+        }
+
+        if (data.startsWith('admin_move_btn_')) {
+            // admin_move_btn_up_{id} or admin_move_btn_down_{id}
+            const parts = data.split('_');
+            const btnId = parts.pop() || '';
+            const direction = parts[parts.length - 1]; // 'up' or 'down'
+
+            const btn = await getPrismaClient()?.botButton.findUnique({ where: { id: btnId } });
+            if (btn) {
+                // Find adjacent button
+                const allButtons = await BotManager.getButtonsForMessage(btn.message_id);
+                const currentIndex = allButtons.findIndex(b => b.id === btn.id);
+
+                if (direction === 'up' && currentIndex > 0) {
+                    const prevBtn = allButtons[currentIndex - 1];
+                    // Swap orders
+                    const tempOrder = btn.order;
+                    await BotManager.updateButton(btn.id, { order: prevBtn.order });
+                    await BotManager.updateButton(prevBtn.id, { order: tempOrder });
+                } else if (direction === 'down' && currentIndex < allButtons.length - 1) {
+                    const nextBtn = allButtons[currentIndex + 1];
+                    // Swap orders
+                    const tempOrder = btn.order;
+                    await BotManager.updateButton(btn.id, { order: nextBtn.order });
+                    await BotManager.updateButton(nextBtn.id, { order: tempOrder });
+                }
+
+                // Refresh management view
+                await this.showEditMessage(chatId, messageId, btn.message_id);
+            }
+            return;
+        }
+
     }
 
     static async handleUserInput(chatId: number, userId: number, text: string) {
@@ -238,6 +348,49 @@ export class AdminManager {
             }
         }
 
+        if (state.action === 'create_page') {
+            if (state.step === 'enter_key') {
+                stateData.page_key = text;
+                await this.setState(userId, 'create_page', 'enter_title', stateData);
+                await TelegramBot.sendMessage(chatId, "Введите <b>заголовок страницы</b> (для списка в админке):", { parse_mode: 'HTML' });
+                return true;
+            }
+            if (state.step === 'enter_title') {
+                stateData.title = text;
+                await this.setState(userId, 'create_page', 'enter_text', stateData);
+                await TelegramBot.sendMessage(chatId, "Введите <b>текст сообщения</b> (содержимое страницы):", { parse_mode: 'HTML' });
+                return true;
+            }
+            if (state.step === 'enter_text') {
+                const newMsg = await BotManager.createMessage({
+                    page_key: stateData.page_key,
+                    title: stateData.title,
+                    text: text,
+                    is_main_menu: false
+                });
+                await this.clearState(userId);
+                await TelegramBot.sendMessage(chatId, "✅ <b>Страница создана!</b>", { parse_mode: 'HTML' });
+                await this.showEditMessage(chatId, undefined, newMsg.id, true);
+                return true;
+            }
+        }
+
+        if (state.action === ACTIONS.EDIT_MESSAGE_TEXT) {
+            await BotManager.updateMessage(stateData.message_id, { text: text });
+            await this.clearState(userId);
+            await TelegramBot.sendMessage(chatId, "✅ <b>Текст обновлен!</b>", { parse_mode: 'HTML' });
+            await this.showEditMessage(chatId, undefined, stateData.message_id, true);
+            return true;
+        }
+
+        if (state.action === ACTIONS.EDIT_MESSAGE_TITLE) {
+            await BotManager.updateMessage(stateData.message_id, { title: text });
+            await this.clearState(userId);
+            await TelegramBot.sendMessage(chatId, "✅ <b>Заголовок обновлен!</b>", { parse_mode: 'HTML' });
+            await this.showEditMessage(chatId, undefined, stateData.message_id, true);
+            return true;
+        }
+
         return false;
     }
 
@@ -248,16 +401,18 @@ export class AdminManager {
 
         messages.forEach(msg => {
             const title = (msg.title || "Без заголовка").substring(0, 30);
-            const icon = msg.is_main_menu ? "🏠 " : "";
+            const icon = msg.is_main_menu ? "🏠 " : "📄 ";
             buttons.push([{
                 text: `${icon}${msg.page_key} — ${title}`,
                 callback_data: `admin_edit_message_${msg.id}`
             }]);
         });
 
+        // Add "Create New Page" button
+        buttons.push([{ text: "➕ Создать новую страницу", callback_data: "admin_create_page_start" }]);
         buttons.push([{ text: "🔙 Назад", callback_data: "admin_panel" }]);
 
-        await TelegramBot.editMessageText(chatId, messageId, "📝 <b>СПИСОК СООБЩЕНИЙ</b>\n\nВыберите страницу для редактирования:", {
+        await TelegramBot.editMessageText(chatId, messageId, "📝 <b>СПИСОК СТРАНИЦ</b>\n\nВыберите страницу для редактирования или создайте новую:", {
             parse_mode: 'HTML',
             reply_markup: { inline_keyboard: buttons }
         });
@@ -272,16 +427,28 @@ export class AdminManager {
             return;
         }
 
+        const msgButtons = await BotManager.getButtonsForMessage(targetMsgId);
+
         const buttons: TelegramInlineKeyboardButton[][] = [
             [{ text: "➕ Добавить кнопку", callback_data: `admin_create_button_msg_${targetMsgId}` }],
-            [{ text: "✏️ Изменить текст", callback_data: `admin_edit_msg_text_${targetMsgId}` }],
-            [{ text: "🔙 Назад", callback_data: "admin_button_management" }]
+            [{ text: "✏️ Изм. текст", callback_data: `admin_edit_msg_text_${targetMsgId}` }, { text: "🏷 Изм. заголовок", callback_data: `admin_edit_msg_title_${targetMsgId}` }],
         ];
 
-        // We also list current buttons to delete/edit them
-        // (Simplified: just list count for now or simple list)
+        // List existing buttons for management
+        msgButtons.forEach(btn => {
+            buttons.push([{
+                text: `🔘 ${btn.text} ${btn.button_type === 'url' ? '(🔗)' : '(📄)'}`,
+                callback_data: `admin_manage_btn_${btn.id}`
+            }]);
+        });
 
-        const text = `⚙️ <b>Редактирование: ${msg.page_key}</b>\n\nТекст:\n<i>${msg.text}</i>`;
+        if (!msg.is_main_menu) {
+            buttons.push([{ text: "❌ Удалить страницу", callback_data: `admin_delete_page_${targetMsgId}` }]);
+        }
+
+        buttons.push([{ text: "🔙 Назад к списку", callback_data: "admin_button_management" }]);
+
+        const text = `⚙️ <b>Редактирование: ${msg.page_key}</b>\n\n<b>Заголовок:</b> ${msg.title}\n\n<b>Текст:</b>\n${msg.text}`;
 
         if (isNewMessage) {
             await TelegramBot.sendMessage(chatId, text, {
