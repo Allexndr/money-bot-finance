@@ -250,28 +250,37 @@ export class AdminManager {
             return;
         }
 
-        // Manage Button Flow (Delete for now, can extend to Edit later)
+        // Manage Button Flow
         if (data.startsWith('admin_manage_btn_')) {
             const btnId = data.split('_').pop() || '';
 
-            // To properly go back, we need the message ID. Let's fetch the button to get message_id
             const btn = await getPrismaClient()?.botButton.findUnique({ where: { id: btnId } });
 
             if (btn) {
                 const buttons: TelegramInlineKeyboardButton[][] = [
                     [
-                        { text: "⬆️", callback_data: `admin_mv_u_${btnId}` },
-                        { text: "⬇️", callback_data: `admin_mv_d_${btnId}` }
+                        { text: "⬆️ Вверх", callback_data: `admin_mv_u_${btnId}` },
+                        { text: "⬇️ Вниз", callback_data: `admin_mv_d_${btnId}` }
                     ],
                     [
                         { text: "✏️ Текст", callback_data: `admin_edit_btn_text_${btnId}` },
                         { text: "🎯 Цель (Ссылка/Стр.)", callback_data: `admin_edit_btn_target_${btnId}` }
-                    ],
-                    [{ text: "❌ Удалить кнопку", callback_data: `admin_delete_btn_${btnId}` }],
-                    [{ text: "🔙 Назад", callback_data: `admin_edit_message_${btn.message_id}` }]
+                    ]
                 ];
 
-                await TelegramBot.editMessageText(chatId, messageId, `Настройка кнопки: <b>${btn.text}</b>\n\nТекущая цель: ${btn.action_data}`, {
+                // If button is a page link, add "Go to page" shortcut
+                if (btn.button_type === 'message') {
+                    const targetPage = await BotManager.getMessageByKey(btn.action_data);
+                    if (targetPage) {
+                        buttons.push([{ text: `📂 К странице "${targetPage.title || targetPage.page_key}"`, callback_data: `admin_edit_message_${targetPage.id}` }]);
+                    }
+                }
+
+                buttons.push([{ text: "❌ Удалить кнопку", callback_data: `admin_delete_btn_${btnId}` }]);
+                buttons.push([{ text: "🔙 Назад", callback_data: `admin_edit_message_${btn.message_id}` }]);
+
+                const targetDesc = btn.button_type === 'url' ? `🔗 Ссылка: ${btn.action_data}` : `📄 Страница: ${btn.action_data}`;
+                await TelegramBot.editMessageText(chatId, messageId, `Настройка кнопки: <b>${btn.text}</b>\n\n<b>Текущая цель:</b>\n${targetDesc}`, {
                     parse_mode: 'HTML',
                     reply_markup: { inline_keyboard: buttons }
                 });
@@ -355,44 +364,27 @@ export class AdminManager {
         }
 
         if (data.startsWith('admin_mv_')) {
-            // admin_mv_u_{id} or admin_mv_d_{id}
-            let btnId = '';
-            let direction = '';
-
-            if (data.startsWith('admin_mv_u_')) {
-                btnId = data.replace('admin_mv_u_', '');
-                direction = 'up';
-            } else if (data.startsWith('admin_mv_d_')) {
-                btnId = data.replace('admin_mv_d_', '');
-                direction = 'down';
-            } else {
-                return;
-            }
+            const parts = data.split('_');
+            const btnId = parts.pop() || '';
+            const direction = data.startsWith('admin_mv_u_') ? 'up' : 'down';
 
             const btn = await getPrismaClient()?.botButton.findUnique({ where: { id: btnId } });
             if (btn) {
-                // Find adjacent button
-                const allButtons = await BotManager.getButtonsForMessage(btn.message_id);
-                // Sort by current order/row to be safe
-                allButtons.sort((a, b) => a.order - b.order);
+                // Ensure orders are sequential before moving
+                await BotManager.normalizeButtonOrders(btn.message_id);
 
+                const allButtons = await BotManager.getButtonsForMessage(btn.message_id);
                 const currentIndex = allButtons.findIndex(b => b.id === btn.id);
 
                 if (direction === 'up' && currentIndex > 0) {
                     const prevBtn = allButtons[currentIndex - 1];
-                    // Swap orders
                     const tempOrder = btn.order;
-                    // Fix: Ensure orders are distinct if they were same
                     const newOrder = prevBtn.order;
 
                     await BotManager.updateButton(btn.id, { order: newOrder });
                     await BotManager.updateButton(prevBtn.id, { order: tempOrder });
-
-                    // Re-normalize orders to ensure consistency
-                    // await this.normalizeButtonOrders(btn.message_id); 
                 } else if (direction === 'down' && currentIndex < allButtons.length - 1) {
                     const nextBtn = allButtons[currentIndex + 1];
-                    // Swap orders
                     const tempOrder = btn.order;
                     const newOrder = nextBtn.order;
 
@@ -400,8 +392,6 @@ export class AdminManager {
                     await BotManager.updateButton(nextBtn.id, { order: tempOrder });
                 }
 
-                // Refresh management view - we need to go back to the BUTTON menu or MESSAGE menu?
-                // The user was in "Manage Button" menu. Let's send them back to MESSAGE menu to see the new order.
                 await this.showEditMessage(chatId, messageId, btn.message_id);
             }
             return;
@@ -594,6 +584,9 @@ export class AdminManager {
     }
 
     static async showEditMessage(chatId: number, messageId: number | undefined, targetMsgId: string, isNewMessage: boolean = false) {
+        // Automatically normalize orders to prevent "Up/Down" glitches
+        await BotManager.normalizeButtonOrders(targetMsgId);
+
         const msg = await BotManager.getMessageById(targetMsgId);
         if (!msg) {
             if (messageId) {

@@ -172,6 +172,25 @@ export class BotManager {
     });
   }
 
+  static async normalizeButtonOrders(messageId: string): Promise<void> {
+    const prisma = getPrismaClient();
+    if (!prisma) return;
+
+    const buttons = await prisma.botButton.findMany({
+      where: { message_id: messageId, is_active: true },
+      orderBy: [{ row: 'asc' }, { order: 'asc' }],
+    });
+
+    // Simple normalization: everything to row 0, sequential order
+    // In future, can preserve rows
+    for (let i = 0; i < buttons.length; i++) {
+      await prisma.botButton.update({
+        where: { id: buttons[i].id },
+        data: { order: i, row: 0 }
+      });
+    }
+  }
+
   static async createButton(data: {
     message_id: string;
     text: string;
@@ -182,6 +201,15 @@ export class BotManager {
   }): Promise<BotButton> {
     const prisma = getPrismaClient();
     if (!prisma) throw new Error('Database not available');
+
+    // Get max order
+    const lastBtn = await prisma.botButton.findFirst({
+      where: { message_id: data.message_id },
+      orderBy: { order: 'desc' },
+    });
+
+    const nextOrder = (lastBtn?.order !== undefined) ? lastBtn.order + 1 : 0;
+
     return prisma.botButton.create({
       data: {
         message_id: data.message_id,
@@ -189,7 +217,7 @@ export class BotManager {
         button_type: data.button_type,
         action_data: data.action_data,
         row: data.row || 0,
-        order: data.order || 0,
+        order: data.order ?? nextOrder,
       },
     });
   }
