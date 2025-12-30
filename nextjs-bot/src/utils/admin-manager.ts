@@ -378,18 +378,14 @@ export class AdminManager {
 
                 if (direction === 'up' && currentIndex > 0) {
                     const prevBtn = allButtons[currentIndex - 1];
-                    const tempOrder = btn.order;
-                    const newOrder = prevBtn.order;
-
-                    await BotManager.updateButton(btn.id, { order: newOrder });
-                    await BotManager.updateButton(prevBtn.id, { order: tempOrder });
+                    const currBtn = allButtons[currentIndex];
+                    await BotManager.updateButton(currBtn.id, { order: prevBtn.order, row: prevBtn.row });
+                    await BotManager.updateButton(prevBtn.id, { order: currBtn.order, row: currBtn.row });
                 } else if (direction === 'down' && currentIndex < allButtons.length - 1) {
                     const nextBtn = allButtons[currentIndex + 1];
-                    const tempOrder = btn.order;
-                    const newOrder = nextBtn.order;
-
-                    await BotManager.updateButton(btn.id, { order: newOrder });
-                    await BotManager.updateButton(nextBtn.id, { order: tempOrder });
+                    const currBtn = allButtons[currentIndex];
+                    await BotManager.updateButton(currBtn.id, { order: nextBtn.order, row: nextBtn.row });
+                    await BotManager.updateButton(nextBtn.id, { order: currBtn.order, row: currBtn.row });
                 }
 
                 await this.showEditMessage(chatId, messageId, btn.message_id);

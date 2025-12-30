@@ -181,12 +181,11 @@ export class BotManager {
       orderBy: [{ row: 'asc' }, { order: 'asc' }],
     });
 
-    // Simple normalization: everything to row 0, sequential order
-    // In future, can preserve rows
+    // Normalization: assign each button its own row to keep them vertical
     for (let i = 0; i < buttons.length; i++) {
       await prisma.botButton.update({
         where: { id: buttons[i].id },
-        data: { order: i, row: 0 }
+        data: { order: i, row: i }
       });
     }
   }
