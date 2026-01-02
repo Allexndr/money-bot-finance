@@ -524,24 +524,17 @@ export class AdminManager {
                 if (stateData.create_inner_button_for) {
                     const innerPageId = stateData.create_inner_button_for;
 
-                    await TelegramBot.sendMessage(chatId, "✅ <b>Внешняя кнопка создана!</b>\n\nТеперь создаем кнопку внутри...", { parse_mode: 'HTML' });
+                    await TelegramBot.sendMessage(chatId, "✅ <b>Внешняя кнопка создана!</b>\n\nТеперь создаем кнопку-ссылку внутри...", { parse_mode: 'HTML' });
 
-                    // Start creating button inside the new page
-                    await this.setState(userId, ACTIONS.CREATE_BUTTON, STEPS.INITIAL_TYPE_SELECTION, { message_id: innerPageId });
+                    // Default to URL button for inner button - just ask for URL
+                    await this.setState(userId, ACTIONS.CREATE_BUTTON, STEPS.URL_INPUT, {
+                        message_id: innerPageId,
+                        button_type: 'url'
+                    });
 
-                    const buttons: TelegramInlineKeyboardButton[][] = [
-                        [
-                            { text: "🔗 Ссылка на сайт", callback_data: `admin_btn_creation_type_url_${innerPageId}` },
-                            { text: "📝 Сообщение внутри кнопки", callback_data: `admin_btn_creation_type_innermsg_${innerPageId}` }
-                        ],
-                        [
-                            { text: "🔙 Отмена", callback_data: `admin_edit_message_${innerPageId}` }
-                        ]
-                    ];
-
-                    await TelegramBot.sendMessage(chatId, "➕ <b>ДОБАВЛЕНИЕ КНОПКИ ВНУТРЬ</b>\n\n<b>Куда должна вести эта кнопка?</b>", {
+                    await TelegramBot.sendMessage(chatId, "🔗 <b>Отправьте ссылку</b>\n\nПросто пришлите ссылку, которая должна открываться при нажатии.\n<i>Обязательно с https://</i>", {
                         parse_mode: 'HTML',
-                        reply_markup: { inline_keyboard: buttons }
+                        reply_markup: { inline_keyboard: [[{ text: "🔙 Отмена", callback_data: `admin_edit_message_${innerPageId}` }]] }
                     });
                     return true;
                 }
