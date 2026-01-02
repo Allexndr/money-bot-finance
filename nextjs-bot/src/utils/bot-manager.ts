@@ -167,6 +167,11 @@ export class BotManager {
   static async deleteMessage(id: string): Promise<BotMessage> {
     const prisma = getPrismaClient();
     if (!prisma) throw new Error('Database not available');
+    // Cascade delete buttons first
+    await prisma.botButton.deleteMany({
+      where: { message_id: id },
+    });
+
     return prisma.botMessage.delete({
       where: { id },
     });
