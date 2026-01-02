@@ -26,7 +26,62 @@ const DEFAULT_MESSAGES = {
 
       { text: "ℹ️ О боте", type: "callback", action: "about", row: 9, order: 0 },
     ],
+    ],
   },
+consultation: {
+  title: "💬 Консультация",
+    text: "Чтобы записаться на консультацию, напишите мне в личные сообщения: @Saule_Saifullina\n\nЯ отвечу на все ваши вопросы и мы подберем удобное время.",
+      buttons: [
+        { text: "🔙 Назад", type: "callback", action: "back", row: 0, order: 0 }
+      ]
+},
+about: {
+  title: "ℹ️ О боте",
+    text: "Этот бот создан, чтобы помочь вам проработать финансовые блоки и выйти на новый уровень дохода.\n\nЗдесь вы найдете:\n- Бесплатные практики\n- Информацию о курсах\n- Возможность записаться на консультацию",
+      buttons: [
+        { text: "🔙 Назад", type: "callback", action: "back", row: 0, order: 0 }
+      ]
+},
+course_buy: {
+  title: "💰 Курс 'Деньги в радости'",
+    text: "Курс 'Деньги в радости' — это глубокая проработка ваших отношений с финансами.\n\nПодробности и программа курса доступны по ссылке ниже.",
+      buttons: [
+        { text: "🔗 Подробнее о курсе", type: "url", action: "https://t.me/saule_prodengi", row: 0, order: 0 },
+        { text: "🔙 Назад", type: "callback", action: "back", row: 1, order: 0 }
+      ]
+},
+buy_quest: {
+  title: "🎬 Запись 2-го потока Квеста",
+    text: "Вы можете приобрести запись 2-го потока квеста 'Денежный прорыв'.\n\nЭто отличная возможность пройти квест в своем темпе.",
+      buttons: [
+        { text: "💳 Купить (Ссылка)", type: "url", action: "https://t.me/saule_prodengi", row: 0, order: 0 },
+        { text: "🔙 Назад", type: "callback", action: "back", row: 1, order: 0 }
+      ]
+},
+closed_club: {
+  title: "🚀 Клуб «Квантовый скачок»",
+    text: "Закрытый клуб для тех, кто хочет расти постоянно.\n\nВступайте в клуб, чтобы быть в окружении единомышленников.",
+      buttons: [
+        { text: "🚪 Вступить в клуб", type: "url", action: "https://t.me/saule_prodengi", row: 0, order: 0 },
+        { text: "🔙 Назад", type: "callback", action: "back", row: 1, order: 0 }
+      ]
+},
+quest_community: {
+  title: "🎯 Квест 'Денежный прорыв'",
+    text: "Присоединяйтесь к бесплатному квесту и начните свой путь к финансовой свободе прямо сейчас!",
+      buttons: [
+        { text: "👉 Перейти к квесту", type: "url", action: "https://t.me/saule_prodengi", row: 0, order: 0 },
+        { text: "🔙 Назад", type: "callback", action: "back", row: 1, order: 0 }
+      ]
+},
+tg_channel: {
+  title: "📢 Канал «Про деньги»",
+    text: "Подписывайтесь на мой открытый канал, там много полезного!",
+      buttons: [
+        { text: "🔗 Перейти в канал", type: "url", action: "https://t.me/saule_prodengi", row: 0, order: 0 },
+        { text: "🔙 Назад", type: "callback", action: "back", row: 1, order: 0 }
+      ]
+}
 };
 
 export async function seedDatabase() {
