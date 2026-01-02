@@ -30,6 +30,8 @@ const DEFAULT_MESSAGES = {
   consultation: {
     title: "💬 Консультация",
     text: "Чтобы записаться на консультацию, напишите мне в личные сообщения: @Saule_Saifullina\n\nЯ отвечу на все ваши вопросы и мы подберем удобное время.",
+    parse_mode: "HTML",
+    is_main_menu: false,
     buttons: [
       { text: "🔙 Назад", type: "callback", action: "back", row: 0, order: 0 }
     ]
@@ -37,6 +39,8 @@ const DEFAULT_MESSAGES = {
   about: {
     title: "ℹ️ О боте",
     text: "Этот бот создан, чтобы помочь вам проработать финансовые блоки и выйти на новый уровень дохода.\n\nЗдесь вы найдете:\n- Бесплатные практики\n- Информацию о курсах\n- Возможность записаться на консультацию",
+    parse_mode: "HTML",
+    is_main_menu: false,
     buttons: [
       { text: "🔙 Назад", type: "callback", action: "back", row: 0, order: 0 }
     ]
@@ -44,6 +48,8 @@ const DEFAULT_MESSAGES = {
   course_buy: {
     title: "💰 Курс 'Деньги в радости'",
     text: "Курс 'Деньги в радости' — это глубокая проработка ваших отношений с финансами.\n\nПодробности и программа курса доступны по ссылке ниже.",
+    parse_mode: "HTML",
+    is_main_menu: false,
     buttons: [
       { text: "🔗 Подробнее о курсе", type: "url", action: "https://t.me/saule_prodengi", row: 0, order: 0 },
       { text: "🔙 Назад", type: "callback", action: "back", row: 1, order: 0 }
@@ -52,6 +58,8 @@ const DEFAULT_MESSAGES = {
   buy_quest: {
     title: "🎬 Запись 2-го потока Квеста",
     text: "Вы можете приобрести запись 2-го потока квеста 'Денежный прорыв'.\n\nЭто отличная возможность пройти квест в своем темпе.",
+    parse_mode: "HTML",
+    is_main_menu: false,
     buttons: [
       { text: "💳 Купить (Ссылка)", type: "url", action: "https://t.me/saule_prodengi", row: 0, order: 0 },
       { text: "🔙 Назад", type: "callback", action: "back", row: 1, order: 0 }
@@ -60,6 +68,8 @@ const DEFAULT_MESSAGES = {
   closed_club: {
     title: "🚀 Клуб «Квантовый скачок»",
     text: "Закрытый клуб для тех, кто хочет расти постоянно.\n\nВступайте в клуб, чтобы быть в окружении единомышленников.",
+    parse_mode: "HTML",
+    is_main_menu: false,
     buttons: [
       { text: "🚪 Вступить в клуб", type: "url", action: "https://t.me/saule_prodengi", row: 0, order: 0 },
       { text: "🔙 Назад", type: "callback", action: "back", row: 1, order: 0 }
@@ -68,6 +78,8 @@ const DEFAULT_MESSAGES = {
   quest_community: {
     title: "🎯 Квест 'Денежный прорыв'",
     text: "Присоединяйтесь к бесплатному квесту и начните свой путь к финансовой свободе прямо сейчас!",
+    parse_mode: "HTML",
+    is_main_menu: false,
     buttons: [
       { text: "👉 Перейти к квесту", type: "url", action: "https://t.me/saule_prodengi", row: 0, order: 0 },
       { text: "🔙 Назад", type: "callback", action: "back", row: 1, order: 0 }
@@ -76,6 +88,8 @@ const DEFAULT_MESSAGES = {
   tg_channel: {
     title: "📢 Канал «Про деньги»",
     text: "Подписывайтесь на мой открытый канал, там много полезного!",
+    parse_mode: "HTML",
+    is_main_menu: false,
     buttons: [
       { text: "🔗 Перейти в канал", type: "url", action: "https://t.me/saule_prodengi", row: 0, order: 0 },
       { text: "🔙 Назад", type: "callback", action: "back", row: 1, order: 0 }
