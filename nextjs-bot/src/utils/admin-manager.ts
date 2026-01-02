@@ -314,34 +314,39 @@ export class AdminManager {
                         { text: "⬇️ Вниз", callback_data: `admin_mv_d_${btnId}` }
                     ],
                     [
-                        { text: "✏️ Текст", callback_data: `admin_edit_btn_text_${btnId}` },
-                        { text: "🎯 Цель (Ссылка/Стр.)", callback_data: `admin_edit_btn_target_${btnId}` }
+                        { text: "✏️ Текст кнопки", callback_data: `admin_edit_btn_text_${btnId}` }
                     ]
                 ];
 
-                // If button is a page link, add "Go to page" shortcut
-                // If button is a page link, add "Inner Content" shortcuts
-                // If button is a page link, add "Inner Content" shortcuts
+                // If button links to a page (message type), add "Edit Content Inside" shortcut
                 if (btn.button_type === 'message') {
                     const targetPage = await BotManager.getMessageByKey(btn.action_data);
 
-                    // Logic: If page exists, use ID-based callbacks. If not, use Key-based "auto-create" callbacks.
-                    const txtCallback = targetPage ? `admin_edit_msg_text_${targetPage.id}` : `admin_auto_txt_${btn.action_data}`;
-                    const btnCallback = targetPage ? `admin_create_button_msg_${targetPage.id}` : `admin_auto_btn_${btn.action_data}`;
-                    const setCallback = targetPage ? `admin_edit_message_${targetPage.id}` : `admin_auto_set_${btn.action_data}`;
+                    // Go directly to editing the inner page
+                    const editContentCallback = targetPage
+                        ? `admin_edit_message_${targetPage.id}`
+                        : `admin_auto_set_${btn.action_data}`;
 
-                    buttons.push([
-                        { text: "📝 Текст сообщения", callback_data: txtCallback },
-                        { text: "➕ Кнопка (внутрь)", callback_data: btnCallback }
-                    ]);
-                    buttons.push([{ text: `⚙️ Настройки страницы`, callback_data: setCallback }]);
+                    buttons.push([{
+                        text: "📝 Редактировать содержимое",
+                        callback_data: editContentCallback
+                    }]);
+                } else {
+                    // If it's a URL button, allow changing the URL
+                    buttons.push([{
+                        text: "🔗 Изменить ссылку",
+                        callback_data: `admin_edit_btn_target_${btnId}`
+                    }]);
                 }
 
                 buttons.push([{ text: "❌ Удалить кнопку", callback_data: `admin_delete_btn_${btnId}` }]);
                 buttons.push([{ text: "🔙 Назад", callback_data: `admin_edit_message_${btn.message_id}` }]);
 
-                const targetDesc = btn.button_type === 'url' ? `🔗 Ссылка: ${btn.action_data}` : `📄 Страница: ${btn.action_data}`;
-                await TelegramBot.editMessageText(chatId, messageId, `Настройка кнопки: <b>${btn.text}</b>\n\n<b>Текущая цель:</b>\n${targetDesc}`, {
+                const description = btn.button_type === 'url'
+                    ? `Ссылка: ${btn.action_data}`
+                    : `Ведет к странице: ${btn.action_data}`;
+
+                await TelegramBot.editMessageText(chatId, messageId, `<b>Кнопка:</b> ${btn.text}\n\n${description}`, {
                     parse_mode: 'HTML',
                     reply_markup: { inline_keyboard: buttons }
                 });
@@ -618,43 +623,23 @@ export class AdminManager {
 
     // Helpers
     static async showButtonManagement(chatId: number, messageId: number) {
-        const messages = await BotManager.getAllMessages();
+        // User requested: "оставь тут только главное меню пожалуйста и создание новой страницы"
         const buttons: TelegramInlineKeyboardButton[][] = [];
 
-        if (messages.length > 0) {
-            // Sort: Main Menu first, then alphabetical by title
-            messages.sort((a, b) => {
-                if (a.page_key === 'main_menu') return -1;
-                if (b.page_key === 'main_menu') return 1;
-                return (a.title || a.page_key).localeCompare(b.title || b.page_key);
-            });
-
-            messages.forEach(msg => {
-                // Use Title primarily. If no title, use Key.
-                // Format: "🏠 Главное меню" or "📄 Заголовок страницы"
-                const title = (msg.title || msg.page_key).substring(0, 40);
-                const icon = msg.page_key === 'main_menu' ? "🏠 " : "📄 ";
-
-                // Don't show technical key unless it's the only thing we have or it's crucial
-                // User complained about "too many pages" and seeing keys like "tg_channel".
-                // Let's hide the key if we have a nice title, or put it in parens if needed for distinction.
-
-                const label = msg.page_key === 'main_menu'
-                    ? `${icon}Главное меню`
-                    : `${icon}${title}`;
-
-                buttons.push([{
-                    text: label,
-                    callback_data: `admin_edit_message_${msg.id}`
-                }]);
-            });
+        // Show ONLY Main Menu
+        const mainMenu = await BotManager.getMessageByKey('main_menu');
+        if (mainMenu) {
+            buttons.push([{
+                text: "Главное меню", // No icon as requested
+                callback_data: `admin_edit_message_${mainMenu.id}`
+            }]);
         }
 
         // Add "Create New Page" button
         buttons.push([{ text: "➕ Создать новую страницу", callback_data: "admin_create_page_start" }]);
         buttons.push([{ text: "🔙 Назад", callback_data: "admin_panel" }]);
 
-        await TelegramBot.editMessageText(chatId, messageId, "📝 <b>СПИСОК СТРАНИЦ</b>\n\nВыберите страницу для редактирования или создайте новую:", {
+        await TelegramBot.editMessageText(chatId, messageId, "📝 <b>УПРАВЛЕНИЕ БОТОМ</b>\n\nВыберите действие:", {
             parse_mode: 'HTML',
             reply_markup: { inline_keyboard: buttons }
         });
@@ -681,8 +666,10 @@ export class AdminManager {
 
         // List existing buttons for management
         msgButtons.forEach(btn => {
+            // User requested: "убери у них значок кнопки этот перед каждый названием"
+            const typeHint = btn.button_type === 'url' ? ' [ссылка]' : '';
             buttons.push([{
-                text: `🔘 ${btn.text} ${btn.button_type === 'url' ? '(🔗)' : '(📄)'}`,
+                text: `${btn.text}${typeHint}`,
                 callback_data: `admin_manage_btn_${btn.id}`
             }]);
         });
