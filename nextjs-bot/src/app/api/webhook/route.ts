@@ -77,17 +77,23 @@ async function handleCallbackQuery(callbackQuery: TelegramCallbackQuery) {
   // Отвечаем на callback query (чтобы часики не висели) - handled inside AdminManager for admin events, but generally good here unless AdminManager handles it better.
   // AdminManager answers it if it's admin.
 
+  console.log('[Webhook] Callback data:', data);
+
   if (data.startsWith('admin_')) {
     // const { AdminManager } = await import('@/utils/admin-manager');
     await AdminManager.handleAdminCallback(callbackQuery);
     return;
   }
 
-  await TelegramBot.answerCallbackQuery(queryId);
+  try {
+    await TelegramBot.answerCallbackQuery(queryId);
+  } catch (e) {
+    console.error('answerCallbackQuery failed (non-fatal):', e);
+  }
 
   // Проверяем, есть ли сообщение в базе данных с таким page_key
-  // const { BotManager } = await import('@/utils/bot-manager');
   const dbMessage = await BotManager.getMessageByKey(data);
+  console.log('[Webhook] Navigation target:', data, 'Found:', !!dbMessage);
 
   if (dbMessage) {
     // Это переход на сообщение из базы данных
