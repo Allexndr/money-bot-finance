@@ -621,14 +621,34 @@ export class AdminManager {
         const messages = await BotManager.getAllMessages();
         const buttons: TelegramInlineKeyboardButton[][] = [];
 
-        messages.forEach(msg => {
-            const title = (msg.title || "Без заголовка").substring(0, 30);
-            const icon = msg.is_main_menu ? "🏠 " : "📄 ";
-            buttons.push([{
-                text: `${icon}${msg.page_key} — ${title}`,
-                callback_data: `admin_edit_message_${msg.id}`
-            }]);
-        });
+        if (messages.length > 0) {
+            // Sort: Main Menu first, then alphabetical by title
+            messages.sort((a, b) => {
+                if (a.page_key === 'main_menu') return -1;
+                if (b.page_key === 'main_menu') return 1;
+                return (a.title || a.page_key).localeCompare(b.title || b.page_key);
+            });
+
+            messages.forEach(msg => {
+                // Use Title primarily. If no title, use Key.
+                // Format: "🏠 Главное меню" or "📄 Заголовок страницы"
+                const title = (msg.title || msg.page_key).substring(0, 40);
+                const icon = msg.page_key === 'main_menu' ? "🏠 " : "📄 ";
+
+                // Don't show technical key unless it's the only thing we have or it's crucial
+                // User complained about "too many pages" and seeing keys like "tg_channel".
+                // Let's hide the key if we have a nice title, or put it in parens if needed for distinction.
+
+                const label = msg.page_key === 'main_menu'
+                    ? `${icon}Главное меню`
+                    : `${icon}${title}`;
+
+                buttons.push([{
+                    text: label,
+                    callback_data: `admin_edit_message_${msg.id}`
+                }]);
+            });
+        }
 
         // Add "Create New Page" button
         buttons.push([{ text: "➕ Создать новую страницу", callback_data: "admin_create_page_start" }]);
