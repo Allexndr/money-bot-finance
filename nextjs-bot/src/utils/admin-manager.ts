@@ -334,29 +334,21 @@ export class AdminManager {
             return;
         }
 
-        // Edit Button Target Handler
+        // Edit Button Target Handler (for URL buttons only - directly ask for new URL)
         if (data.startsWith('admin_edit_btn_target_')) {
             const btnId = data.split('_').pop() || '';
             const btn = await getPrismaClient()?.botButton.findUnique({ where: { id: btnId } });
             if (btn) {
-                await this.setState(userId, ACTIONS.EDIT_BUTTON_TARGET, STEPS.INITIAL_TYPE_SELECTION, { button_id: btnId, message_id: btn.message_id });
+                // Directly ask for new URL - no need for type selection
+                await this.setState(userId, ACTIONS.EDIT_BUTTON_TARGET, STEPS.URL_INPUT, {
+                    button_id: btnId,
+                    message_id: btn.message_id,
+                    button_type: 'url'
+                });
 
-                const buttons: TelegramInlineKeyboardButton[][] = [
-                    [
-                        { text: "🔗 Ссылка на сайт", callback_data: `admin_btn_creation_type_url_${btn.message_id}` }, // We reuse these but state action is EDIT
-                        { text: "📄 Другая страница", callback_data: `admin_btn_creation_type_message_${btn.message_id}` }
-                    ],
-                    [
-                        { text: "🆕 Новая страница", callback_data: `admin_btn_creation_type_newpage_${btn.message_id}` }
-                    ],
-                    [
-                        { text: "🔙 Отмена", callback_data: `admin_manage_btn_${btnId}` }
-                    ]
-                ];
-
-                await TelegramBot.editMessageText(chatId, messageId, "🎯 <b>Изменение цели кнопки</b>\n\nКуда она должна вести?", {
+                await TelegramBot.editMessageText(chatId, messageId, `🔗 <b>Введите новую ссылку</b>\n\nТекущая: ${btn.action_data}\n\n<i>Обязательно с https://</i>`, {
                     parse_mode: 'HTML',
-                    reply_markup: { inline_keyboard: buttons }
+                    reply_markup: { inline_keyboard: [[{ text: "🔙 Отмена", callback_data: `admin_manage_btn_${btnId}` }]] }
                 });
             }
             return;
