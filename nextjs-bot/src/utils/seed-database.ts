@@ -97,14 +97,15 @@ const DEFAULT_MESSAGES = {
   }
 };
 
-export async function seedDatabase() {
-  console.log('🌱 Seeding database...');
+export async function seedDatabase(): Promise<string[]> {
+  const logs: string[] = [];
+  logs.push('🌱 Seeding database...');
 
   const prisma = getPrismaClient();
 
   if (!prisma) {
-    console.warn('Prisma not available during build, skipping seed');
-    return;
+    logs.push('Prisma not available during build, skipping seed');
+    return logs;
   }
 
   // Создаем дефолтные сообщения
@@ -113,17 +114,23 @@ export async function seedDatabase() {
     let messageId: string;
 
     if (!existingMessage) {
-      console.log(`Creating message: ${pageKey}`);
-      const message = await BotManager.createMessage({
-        page_key: pageKey,
-        title: messageData.title,
-        text: messageData.text,
-        parse_mode: messageData.parse_mode,
-        is_main_menu: messageData.is_main_menu,
-      });
-      messageId = message.id;
+      logs.push(`Creating message: ${pageKey}`);
+      try {
+        const message = await BotManager.createMessage({
+          page_key: pageKey,
+          title: messageData.title,
+          text: messageData.text,
+          parse_mode: messageData.parse_mode,
+          is_main_menu: messageData.is_main_menu,
+        });
+        messageId = message.id;
+        logs.push(`Created message ${pageKey} with ID ${messageId}`);
+      } catch (e: any) {
+        logs.push(`Error creating message ${pageKey}: ${e.message}`);
+        continue;
+      }
     } else {
-      console.log(`Updating existing message: ${pageKey}`);
+      logs.push(`Updating existing message: ${pageKey}`);
       messageId = existingMessage.id;
 
       // Update message content
@@ -143,14 +150,18 @@ export async function seedDatabase() {
 
     // Создаем кнопки для сообщения (ALWAYS recreate/create keys)
     for (const buttonData of messageData.buttons) {
-      await BotManager.createButton({
-        message_id: messageId,
-        text: buttonData.text,
-        button_type: buttonData.type,
-        action_data: buttonData.action,
-        row: buttonData.row,
-        order: buttonData.order,
-      });
+      try {
+        await BotManager.createButton({
+          message_id: messageId,
+          text: buttonData.text,
+          button_type: buttonData.type,
+          action_data: buttonData.action,
+          row: buttonData.row,
+          order: buttonData.order,
+        });
+      } catch (e: any) {
+        logs.push(`Error creating button for ${pageKey}: ${e.message}`);
+      }
     }
   }
 
@@ -158,7 +169,7 @@ export async function seedDatabase() {
   try {
     const demoMsg = await BotManager.getMessageByKey('demo_access');
     if (demoMsg) {
-      console.log('🧹 Cleanup: Found ' + demoMsg.id + ' demo_access message, deleting...');
+      logs.push('🧹 Cleanup: Found ' + demoMsg.id + ' demo_access message, deleting...');
       // Сначала удаляем кнопки
       const buttons = await BotManager.getButtonsForMessage(demoMsg.id);
       for (const btn of buttons) {
@@ -166,11 +177,12 @@ export async function seedDatabase() {
       }
       // Удаляем сообщение
       await BotManager.deleteMessage(demoMsg.id);
-      console.log('✅ Cleanup: demo_access deleted.');
+      logs.push('✅ Cleanup: demo_access deleted.');
     }
-  } catch (e) {
-    console.error('Cleanup error:', e);
+  } catch (e: any) {
+    logs.push(`Cleanup error: ${e.message}`);
   }
 
-  console.log('✅ Database seeded successfully');
+  logs.push('✅ Database seeded successfully');
+  return logs;
 }

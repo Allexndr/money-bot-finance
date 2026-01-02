@@ -4,13 +4,14 @@ export const dynamic = 'force-dynamic';
 
 async function performSeed() {
   const { seedDatabase } = await import('../../../utils/seed-database');
-  await seedDatabase();
+  const logs = await seedDatabase();
+  return logs;
 }
 
 export async function GET() {
   try {
-    await performSeed();
-    return NextResponse.json({ success: true, message: 'Database seeded successfully' });
+    const logs = await performSeed();
+    return NextResponse.json({ success: true, message: 'Database seeded successfully', logs });
   } catch (error: any) {
     console.error('Seed error:', error);
     return NextResponse.json({ error: error.message || 'Failed to seed database' }, { status: 500 });
