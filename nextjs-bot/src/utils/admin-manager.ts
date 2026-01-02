@@ -269,10 +269,15 @@ export class AdminManager {
                 ];
 
                 // If button is a page link, add "Go to page" shortcut
+                // If button is a page link, add "Inner Content" shortcuts
                 if (btn.button_type === 'message') {
                     const targetPage = await BotManager.getMessageByKey(btn.action_data);
                     if (targetPage) {
-                        buttons.push([{ text: `📂 К странице "${targetPage.title || targetPage.page_key}"`, callback_data: `admin_edit_message_${targetPage.id}` }]);
+                        buttons.push([
+                            { text: "📝 Текст сообщения", callback_data: `admin_edit_msg_text_${targetPage.id}` },
+                            { text: "➕ Кнопка (внутрь)", callback_data: `admin_create_button_msg_${targetPage.id}` }
+                        ]);
+                        buttons.push([{ text: `⚙️ Настройки страницы "${targetPage.title || targetPage.page_key}"`, callback_data: `admin_edit_message_${targetPage.id}` }]);
                     }
                 }
 
