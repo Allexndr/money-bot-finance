@@ -33,7 +33,7 @@ const DEFAULT_MESSAGES = {
     parse_mode: "HTML",
     is_main_menu: false,
     buttons: [
-      { text: "🔙 Назад", type: "callback", action: "back", row: 0, order: 0 }
+      { text: "🔙 Назад", type: "callback", action: "main_menu", row: 0, order: 0 }
     ]
   },
   about: {
@@ -42,7 +42,7 @@ const DEFAULT_MESSAGES = {
     parse_mode: "HTML",
     is_main_menu: false,
     buttons: [
-      { text: "🔙 Назад", type: "callback", action: "back", row: 0, order: 0 }
+      { text: "🔙 Назад", type: "callback", action: "main_menu", row: 0, order: 0 }
     ]
   },
   course_buy: {
@@ -52,7 +52,7 @@ const DEFAULT_MESSAGES = {
     is_main_menu: false,
     buttons: [
       { text: "🔗 Подробнее о курсе", type: "url", action: "https://t.me/saule_prodengi", row: 0, order: 0 },
-      { text: "🔙 Назад", type: "callback", action: "back", row: 1, order: 0 }
+      { text: "🔙 Назад", type: "callback", action: "main_menu", row: 1, order: 0 }
     ]
   },
   buy_quest: {
@@ -62,7 +62,7 @@ const DEFAULT_MESSAGES = {
     is_main_menu: false,
     buttons: [
       { text: "💳 Купить (Ссылка)", type: "url", action: "https://t.me/saule_prodengi", row: 0, order: 0 },
-      { text: "🔙 Назад", type: "callback", action: "back", row: 1, order: 0 }
+      { text: "🔙 Назад", type: "callback", action: "main_menu", row: 1, order: 0 }
     ]
   },
   closed_club: {
@@ -72,7 +72,7 @@ const DEFAULT_MESSAGES = {
     is_main_menu: false,
     buttons: [
       { text: "🚪 Вступить в клуб", type: "url", action: "https://t.me/saule_prodengi", row: 0, order: 0 },
-      { text: "🔙 Назад", type: "callback", action: "back", row: 1, order: 0 }
+      { text: "🔙 Назад", type: "callback", action: "main_menu", row: 1, order: 0 }
     ]
   },
   quest_community: {
@@ -82,7 +82,7 @@ const DEFAULT_MESSAGES = {
     is_main_menu: false,
     buttons: [
       { text: "👉 Перейти к квесту", type: "url", action: "https://t.me/saule_prodengi", row: 0, order: 0 },
-      { text: "🔙 Назад", type: "callback", action: "back", row: 1, order: 0 }
+      { text: "🔙 Назад", type: "callback", action: "main_menu", row: 1, order: 0 }
     ]
   },
   tg_channel: {
@@ -92,7 +92,7 @@ const DEFAULT_MESSAGES = {
     is_main_menu: false,
     buttons: [
       { text: "🔗 Перейти в канал", type: "url", action: "https://t.me/saule_prodengi", row: 0, order: 0 },
-      { text: "🔙 Назад", type: "callback", action: "back", row: 1, order: 0 }
+      { text: "🔙 Назад", type: "callback", action: "main_menu", row: 1, order: 0 }
     ]
   }
 };
@@ -110,6 +110,7 @@ export async function seedDatabase() {
   // Создаем дефолтные сообщения
   for (const [pageKey, messageData] of Object.entries(DEFAULT_MESSAGES)) {
     const existingMessage = await BotManager.getMessageByKey(pageKey);
+    let messageId: string;
 
     if (!existingMessage) {
       console.log(`Creating message: ${pageKey}`);
@@ -120,27 +121,36 @@ export async function seedDatabase() {
         parse_mode: messageData.parse_mode,
         is_main_menu: messageData.is_main_menu,
       });
-
-      // Создаем кнопки для сообщения
-      for (const buttonData of messageData.buttons) {
-        await BotManager.createButton({
-          message_id: message.id,
-          text: buttonData.text,
-          button_type: buttonData.type,
-          action_data: buttonData.action,
-          row: buttonData.row,
-          order: buttonData.order,
-        });
-      }
+      messageId = message.id;
     } else {
-      console.log(`Message ${pageKey} already exists`);
-      // Force update title to fix "bot psikh" truncation issue
-      if (pageKey === 'main_menu') {
-        await BotManager.updateMessage(existingMessage.id, {
-          title: messageData.title
-        });
-        console.log(`Updated title for ${pageKey}`);
+      console.log(`Updating existing message: ${pageKey}`);
+      messageId = existingMessage.id;
+
+      // Update message content
+      await BotManager.updateMessage(messageId, {
+        title: messageData.title,
+        text: messageData.text,
+        parse_mode: messageData.parse_mode,
+        is_main_menu: messageData.is_main_menu,
+      });
+
+      // Clear existing buttons to recreate them consistently
+      const currentButtons = await BotManager.getButtonsForMessage(messageId);
+      for (const btn of currentButtons) {
+        await BotManager.deleteButton(btn.id);
       }
+    }
+
+    // Создаем кнопки для сообщения (ALWAYS recreate/create keys)
+    for (const buttonData of messageData.buttons) {
+      await BotManager.createButton({
+        message_id: messageId,
+        text: buttonData.text,
+        button_type: buttonData.type,
+        action_data: buttonData.action,
+        row: buttonData.row,
+        order: buttonData.order,
+      });
     }
   }
 
