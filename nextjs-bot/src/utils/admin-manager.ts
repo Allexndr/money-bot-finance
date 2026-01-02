@@ -241,6 +241,17 @@ export class AdminManager {
             return;
         }
 
+        if (data.startsWith('admin_create_page_missing_')) {
+            const pageKey = data.replace('admin_create_page_missing_', '');
+            // Start creation flow from title step, skipping key input
+            await this.setState(userId, 'create_page', 'enter_title', { page_key: pageKey });
+            await TelegramBot.editMessageText(chatId, messageId,
+                `🆕 <b>Создание страницы: ${pageKey}</b>\n\nВведите <b>заголовок страницы</b> (для списка в админке):`,
+                { parse_mode: 'HTML', reply_markup: { inline_keyboard: [[{ text: "🔙 Отмена", callback_data: "admin_button_management" }]] } }
+            );
+            return;
+        }
+
         // Delete Page Flow
         if (data.startsWith('admin_delete_page_')) {
             const msgId = data.split('_').pop() || '';
@@ -278,6 +289,9 @@ export class AdminManager {
                             { text: "➕ Кнопка (внутрь)", callback_data: `admin_create_button_msg_${targetPage.id}` }
                         ]);
                         buttons.push([{ text: `⚙️ Настройки страницы "${targetPage.title || targetPage.page_key}"`, callback_data: `admin_edit_message_${targetPage.id}` }]);
+                    } else {
+                        // Page doesn't exist yet, offer to create it
+                        buttons.push([{ text: `⚠️ Страница "${btn.action_data}" не найдена. Создать?`, callback_data: `admin_create_page_missing_${btn.action_data}` }]);
                     }
                 }
 
