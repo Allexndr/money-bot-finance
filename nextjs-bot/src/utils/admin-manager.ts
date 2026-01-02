@@ -457,12 +457,12 @@ export class AdminManager {
             if (state) {
                 const stateData = JSON.parse(state.data);
 
+                // Save the newPageId to create button inside it after finishing outer button
+                stateData.create_inner_button_for = newPageId;
+
                 // First, complete the outer button by asking for its text
                 await this.setState(userId, ACTIONS.CREATE_BUTTON, STEPS.TEXT_INPUT, stateData);
                 await TelegramBot.sendMessage(chatId, `Сначала завершим создание внешней кнопки.\n\n<b>Напишите текст кнопки</b>:`, { parse_mode: 'HTML' });
-
-                // TODO: After this button is created, we should redirect to creating a button inside newPageId
-                // For now, user can manually go to that page and add buttons
             }
             return;
         }
@@ -519,6 +519,32 @@ export class AdminManager {
                     button_type: buttonType,
                     action_data: actionData
                 });
+
+                // Check if we need to create a button inside the newly created page
+                if (stateData.create_inner_button_for) {
+                    const innerPageId = stateData.create_inner_button_for;
+
+                    await TelegramBot.sendMessage(chatId, "✅ <b>Внешняя кнопка создана!</b>\n\nТеперь создаем кнопку внутри...", { parse_mode: 'HTML' });
+
+                    // Start creating button inside the new page
+                    await this.setState(userId, ACTIONS.CREATE_BUTTON, STEPS.INITIAL_TYPE_SELECTION, { message_id: innerPageId });
+
+                    const buttons: TelegramInlineKeyboardButton[][] = [
+                        [
+                            { text: "🔗 Ссылка на сайт", callback_data: `admin_btn_creation_type_url_${innerPageId}` },
+                            { text: "📝 Сообщение внутри кнопки", callback_data: `admin_btn_creation_type_innermsg_${innerPageId}` }
+                        ],
+                        [
+                            { text: "🔙 Отмена", callback_data: `admin_edit_message_${innerPageId}` }
+                        ]
+                    ];
+
+                    await TelegramBot.sendMessage(chatId, "➕ <b>ДОБАВЛЕНИЕ КНОПКИ ВНУТРЬ</b>\n\n<b>Куда должна вести эта кнопка?</b>", {
+                        parse_mode: 'HTML',
+                        reply_markup: { inline_keyboard: buttons }
+                    });
+                    return true;
+                }
 
                 await this.clearState(userId);
                 await TelegramBot.sendMessage(chatId, "✅ <b>Кнопка успешно создана!</b>", { parse_mode: 'HTML' });
