@@ -116,10 +116,7 @@ export class AdminManager {
             const buttons: TelegramInlineKeyboardButton[][] = [
                 [
                     { text: "🔗 Ссылка на сайт", callback_data: `admin_btn_creation_type_url_${msgId}` },
-                    { text: "📄 Выбрать страницу", callback_data: `admin_btn_creation_type_message_${msgId}` }
-                ],
-                [
-                    { text: "🆕 Новая страница", callback_data: `admin_btn_creation_type_newpage_${msgId}` }
+                    { text: "📝 Сообщение внутри кнопки", callback_data: `admin_btn_creation_type_innermsg_${msgId}` }
                 ],
                 [
                     { text: "🔙 Отмена", callback_data: `admin_edit_message_${msgId}` }
@@ -136,7 +133,7 @@ export class AdminManager {
         if (data.startsWith('admin_btn_creation_type_')) {
             const parts = data.split('_');
             const msgId = parts.pop() || '';
-            const typeKey = parts.pop(); // 'url', 'message', 'newpage'
+            const typeKey = parts.pop(); // 'url' or 'innermsg'
 
             const state = await this.getState(userId);
 
@@ -146,10 +143,9 @@ export class AdminManager {
 
             // If editing, we have button_id in state data, need to preserve it
             const stateData = state ? JSON.parse(state.data) : { message_id: msgId };
-            stateData.button_type = (typeKey === 'newpage') ? 'message' : typeKey; // 'newpage' creates a 'message' type button
-            stateData.is_creating_new_page = (typeKey === 'newpage');
 
             if (typeKey === 'url') {
+                stateData.button_type = 'url';
                 await this.setState(userId, action, STEPS.URL_INPUT, stateData);
                 await TelegramBot.editMessageText(chatId, messageId,
                     "🔗 <b>Отправьте ссылку</b>\n\nПросто пришлите ссылку, которая должна открываться при нажатии.\n<i>Обязательно с https://</i>",
@@ -158,32 +154,12 @@ export class AdminManager {
                         reply_markup: { inline_keyboard: [[{ text: "🔙 Отмена", callback_data: isEditing ? `admin_manage_btn_${stateData.button_id}` : `admin_create_button_msg_${msgId}` }]] }
                     }
                 );
-            } else if (typeKey === 'message') {
-                await this.setState(userId, action, STEPS.PAGE_SELECT, stateData);
-
-                // Show pages
-                const messages = await BotManager.getAllMessages();
-                const pageButtons: TelegramInlineKeyboardButton[][] = [];
-                messages.forEach(msg => {
-                    pageButtons.push([{
-                        text: `📄 ${msg.title || msg.page_key}`,
-                        callback_data: `admin_create_btn_select_page_${msgId}_${msg.page_key}` // Handler will need adjustment for edit
-                    }]);
-                });
-                pageButtons.push([{ text: "🔙 Отмена", callback_data: isEditing ? `admin_manage_btn_${stateData.button_id}` : `admin_create_button_msg_${msgId}` }]);
-
-                await TelegramBot.editMessageText(chatId, messageId,
-                    "📄 <b>Выберите страницу из списка:</b>",
-                    {
-                        parse_mode: 'HTML',
-                        reply_markup: { inline_keyboard: pageButtons }
-                    }
-                );
-            } else if (typeKey === 'newpage') {
-                // New Page Flow nested in button creation
+            } else if (typeKey === 'innermsg') {
+                // Always create a new page for inner message
+                stateData.button_type = 'message';
                 await this.setState(userId, ACTIONS.CREATE_PAGE_FOR_BUTTON, STEPS.ENTER_KEY, stateData);
                 await TelegramBot.editMessageText(chatId, messageId,
-                    "🆕 <b>Создание страницы для кнопки</b>\n\nВведите уникальный <b>ключ страницы</b> (например: <code>details_about_us</code>):",
+                    "📝 <b>Создание сообщения внутри кнопки</b>\n\nВведите уникальный <b>ключ страницы</b> (например: <code>consultation_info</code>):",
                     {
                         parse_mode: 'HTML',
                         reply_markup: { inline_keyboard: [[{ text: "🔙 Отмена", callback_data: isEditing ? `admin_manage_btn_${stateData.button_id}` : `admin_create_button_msg_${msgId}` }]] }
@@ -459,6 +435,38 @@ export class AdminManager {
             return;
         }
 
+        // Handle "Готово" after creating inner message
+        if (data.startsWith('admin_finish_inner_msg_')) {
+            const parentMsgId = data.split('_').pop() || '';
+            const state = await this.getState(userId);
+
+            if (state) {
+                const stateData = JSON.parse(state.data);
+                // Now ask for button text to complete the button creation
+                await this.setState(userId, ACTIONS.CREATE_BUTTON, STEPS.TEXT_INPUT, stateData);
+                await TelegramBot.sendMessage(chatId, `Теперь <b>напишите текст кнопки</b>:`, { parse_mode: 'HTML' });
+            }
+            return;
+        }
+
+        // Handle "Добавить кнопку внутрь" after creating inner message
+        if (data.startsWith('admin_add_inner_btn_')) {
+            const newPageId = data.split('_').pop() || '';
+            const state = await this.getState(userId);
+
+            if (state) {
+                const stateData = JSON.parse(state.data);
+
+                // First, complete the outer button by asking for its text
+                await this.setState(userId, ACTIONS.CREATE_BUTTON, STEPS.TEXT_INPUT, stateData);
+                await TelegramBot.sendMessage(chatId, `Сначала завершим создание внешней кнопки.\n\n<b>Напишите текст кнопки</b>:`, { parse_mode: 'HTML' });
+
+                // TODO: After this button is created, we should redirect to creating a button inside newPageId
+                // For now, user can manually go to that page and add buttons
+            }
+            return;
+        }
+
     }
 
     static async handleUserInput(chatId: number, userId: number, text: string) {
@@ -554,10 +562,22 @@ export class AdminManager {
                     return true;
                 } else {
                     // Creating new button to this page
+                    // User requested: after page creation, offer choice to continue or add button inside
                     stateData.target_page_key = newMsg.page_key;
-                    // Hand back to CREATE_BUTTON flow for text input
-                    await this.setState(userId, ACTIONS.CREATE_BUTTON, STEPS.TEXT_INPUT, stateData);
-                    await TelegramBot.sendMessage(chatId, `✅ <b>Страница создана!</b> (${newMsg.page_key})\n\nТеперь <b>напишите текст кнопки</b>:`, { parse_mode: 'HTML' });
+                    stateData.new_page_id = newMsg.id;
+
+                    // Ask if user wants to add button inside or just finish
+                    await this.setState(userId, ACTIONS.CREATE_BUTTON, 'choose_next_step', stateData);
+
+                    const buttons: TelegramInlineKeyboardButton[][] = [
+                        [{ text: "✅ Готово", callback_data: `admin_finish_inner_msg_${stateData.message_id}` }],
+                        [{ text: "➕ Добавить кнопку внутрь", callback_data: `admin_add_inner_btn_${newMsg.id}` }]
+                    ];
+
+                    await TelegramBot.sendMessage(chatId, `✅ <b>Страница создана!</b> (${newMsg.page_key})\n\n<b>Что дальше?</b>`, {
+                        parse_mode: 'HTML',
+                        reply_markup: { inline_keyboard: buttons }
+                    });
                     return true;
                 }
             }
